@@ -10,15 +10,19 @@ import (
 
 // InitDB initializes the SQLite database, sets WAL mode, and runs migrations.
 func InitDB(dbPath string) (*sql.DB, error) {
+	if dbPath == "" {
+		return nil, fmt.Errorf("database path cannot be empty")
+	}
 	// Connect with WAL mode and busy timeout
 	dsn := fmt.Sprintf("%s?_journal_mode=WAL&_busy_timeout=5000", dbPath)
 	db, err := sql.Open("sqlite3", dsn)
 	if err != nil {
-		return nil, fmt.Errorf("failed to open database: %w", err)
+		return nil, fmt.Errorf("failed to open database at %s: %w", dbPath, err)
 	}
 
 	if err := db.Ping(); err != nil {
-		return nil, fmt.Errorf("failed to ping database: %w", err)
+		db.Close()
+		return nil, fmt.Errorf("failed to ping database at %s: %w", dbPath, err)
 	}
 
 	if err := runMigrations(db); err != nil {

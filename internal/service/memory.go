@@ -92,6 +92,9 @@ func (s *MemoryService) StoreMemory(content, contextKey, entryType, metadata str
 
 // RecallMemory retrieves the most relevant memories for the provided context keys.
 func (s *MemoryService) RecallMemory(contextKeys []string, limit int) ([]Memory, error) {
+	if len(contextKeys) == 0 {
+		return nil, errors.New("context_keys cannot be empty")
+	}
 	if limit <= 0 {
 		limit = 10
 	}

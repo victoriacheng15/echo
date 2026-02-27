@@ -83,6 +83,20 @@ func TestMemoryService(t *testing.T) {
 				}
 			})
 		}
+
+		t.Run("StoreMemory DB error", func(t *testing.T) {
+			// Create a service with a closed DB
+			sqldb.Close()
+			defer func() {
+				// Re-open for following tests if needed, but TestMemoryService is almost done
+				sqldb, _ = db.InitDB(dbPath)
+				svc = NewMemoryService(sqldb)
+			}()
+			err := svc.StoreMemory("fail", "global", "instruction", "")
+			if err == nil {
+				t.Error("Expected DB error for closed connection, got nil")
+			}
+		})
 	})
 
 	t.Run("RecallMemory", func(t *testing.T) {
@@ -123,6 +137,23 @@ func TestMemoryService(t *testing.T) {
 				}
 			})
 		}
+
+		t.Run("RecallMemory error", func(t *testing.T) {
+			_, err := svc.RecallMemory([]string{}, 10)
+			if err == nil {
+				t.Error("Expected error for empty context_keys, got nil")
+			}
+		})
+
+		t.Run("RecallMemory DB error", func(t *testing.T) {
+			sqldb.Close()
+			_, err := svc.RecallMemory([]string{"global"}, 10)
+			if err == nil {
+				t.Error("Expected DB error for closed connection, got nil")
+			}
+			sqldb, _ = db.InitDB(dbPath)
+			svc = NewMemoryService(sqldb)
+		})
 	})
 
 	t.Run("SearchMemories", func(t *testing.T) {
@@ -154,6 +185,16 @@ func TestMemoryService(t *testing.T) {
 				}
 			})
 		}
+
+		t.Run("SearchMemories DB error", func(t *testing.T) {
+			sqldb.Close()
+			_, err := svc.SearchMemories("test")
+			if err == nil {
+				t.Error("Expected DB error for closed connection, got nil")
+			}
+			sqldb, _ = db.InitDB(dbPath)
+			svc = NewMemoryService(sqldb)
+		})
 	})
 
 	t.Run("DeleteMemory", func(t *testing.T) {
@@ -186,5 +227,15 @@ func TestMemoryService(t *testing.T) {
 				}
 			})
 		}
+
+		t.Run("DeleteMemory DB error", func(t *testing.T) {
+			sqldb.Close()
+			err := svc.DeleteMemory("fail", "global")
+			if err == nil {
+				t.Error("Expected DB error for closed connection, got nil")
+			}
+			sqldb, _ = db.InitDB(dbPath)
+			svc = NewMemoryService(sqldb)
+		})
 	})
 }
