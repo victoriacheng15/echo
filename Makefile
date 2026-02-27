@@ -1,5 +1,6 @@
 BINARY_NAME=echo
 BUILD_DIR=bin
+LINT_IMAGE=ghcr.io/igorshubovych/markdownlint-cli:v0.44.0
 
 # Dynamic Nix Detection
 # 1. Check if nix-shell is available
@@ -12,14 +13,19 @@ TARGET_GOALS = $(if $(MAKECMDGOALS),$(MAKECMDGOALS),all)
 
 ifeq ($(USE_NIX),yes)
     NIX_RUN = nix-shell --run
-    # NIX_WRAP: Re-run the entire make command inside nix-shell
-    NIX_WRAP = @$(NIX_RUN) "make $(TARGET_GOALS)" && exit $$?
+    # NIX_WRAP: Re-run the entire make command inside nix-shell and then exit the outer shell
+    NIX_WRAP = @$(NIX_RUN) "make $(TARGET_GOALS)" && exit $$? ;
 else
     NIX_RUN = bash -c
+    # In the inner shell, NIX_WRAP is just the make silence prefix
     NIX_WRAP = @
 endif
 
-.PHONY: all help update vet format test test-cov build clean check-env
+# Installation settings
+PREFIX ?= $(shell echo $$HOME)/.local
+BIN_DIR = $(PREFIX)/bin
+
+.PHONY: all help update vet format test test-cov build clean check-env install uninstall lint
 
 # Default target: Run the full development lifecycle
 all: update format vet test build
@@ -34,56 +40,71 @@ help:
 	@echo "  update     - Run go mod tidy"
 	@echo "  vet        - Run go vet"
 	@echo "  format     - Run go fmt"
+	@echo "  lint       - Run markdownlint via Docker"
 	@echo "  test       - Run tests"
 	@echo "  test-cov   - Run tests with coverage and open HTML report"
 	@echo "  build      - Build the binary under bin/"
+	@echo "  install    - Install the binary to $(BIN_DIR)"
+	@echo "  uninstall  - Remove the binary from $(BIN_DIR)"
 	@echo "  clean      - Remove build artifacts"
 	@echo "  check-env  - Check environment status (Nix, GitHub Actions)"
 
+# Run markdownlint via Docker
+lint:
+	docker run --rm -v "$(PWD):/data" -w /data $(LINT_IMAGE) --fix "**/*.md"
+
+# Install the binary to the system
+install: build
+	mkdir -p $(BIN_DIR)
+	cp $(BUILD_DIR)/$(BINARY_NAME) $(BIN_DIR)/$(BINARY_NAME)
+	@echo "Echo installed to $(BIN_DIR)/$(BINARY_NAME)"
+
+# Remove the binary from the system
+uninstall:
+	rm -f $(BIN_DIR)/$(BINARY_NAME)
+	@echo "Echo removed from $(BIN_DIR)"
+
 # Check the current environment (Nix, GitHub Actions)
 check-env:
-	$(NIX_WRAP)
-	@echo "--- Environment Status ---"
-	@echo "Nix Available: $(shell command -v nix-shell >/dev/null 2>&1 && echo "yes" || echo "no")"
-	@echo "In Nix Shell:  $(if $(IN_NIX_SHELL),yes,no)"
-	@echo "GitHub Action: $(if $(GITHUB_ACTIONS),yes,no)"
-	@echo "USE_NIX:       $(USE_NIX)"
-	@echo "--------------------------"
+	$(NIX_WRAP) echo "--- Environment Status ---" && \
+	echo "Nix Available: $(shell command -v nix-shell >/dev/null 2>&1 && echo "yes" || echo "no")" && \
+	echo "In Nix Shell:  $(if $(IN_NIX_SHELL),yes,no)" && \
+	echo "GitHub Action: $(if $(GITHUB_ACTIONS),yes,no)" && \
+	echo "USE_NIX:       $(USE_NIX)" && \
+	echo "--------------------------"
 
 # Run go mod tidy to update dependencies
 update:
-	$(NIX_WRAP)
+	$(NIX_WRAP) echo "Updating dependencies..." && \
 	go mod tidy
 
 # Run go vet on all packages
 vet:
-	$(NIX_WRAP)
+	$(NIX_WRAP) echo "Running go vet..." && \
 	go vet ./...
 
 # Run go fmt on all packages
 format:
-	$(NIX_WRAP)
+	$(NIX_WRAP) echo "Running go fmt..." && \
 	go fmt ./...
 
 # Run tests for all packages
 test:
-	$(NIX_WRAP)
+	$(NIX_WRAP) echo "Running tests..." && \
 	go test ./...
 
-# Run tests with coverage and open HTML report (except in CI)
+# Run tests with coverage
 test-cov:
-	$(NIX_WRAP)
-	go test -coverprofile=coverage.out ./...
-	@if [ "$$GITHUB_ACTIONS" != "true" ]; then \
-		go tool cover -html=coverage.out; \
-	fi
+	$(NIX_WRAP) echo "Running tests with coverage..." && \
+	go test -coverprofile=coverage.out ./... && \
+	go tool cover -func=coverage.out && \
 	rm -f coverage.out
 
 # Build the binary under bin/
 build:
-	$(NIX_WRAP)
-	mkdir -p $(BUILD_DIR)
-	go build -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/echo
+	$(NIX_WRAP) echo "Building binary..." && \
+	mkdir -p $(BUILD_DIR) && \
+	go build -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/mcp-echo
 
 # Remove build artifacts
 clean:
