@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'cmd/**'
+      - 'internal/**'
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'cmd/**'
+      - 'internal/**'
+  workflow_dispatch:
+
+env:
+  GO_VERSION: '1.25'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: Run go vet
+        run: make vet
+
+      - name: Run go test
+        run: make test
