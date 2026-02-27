@@ -34,7 +34,7 @@ make install
 
 ### 2. Configuration
 
-Add Echo to your Gemini CLI configuration (usually located at `~/.gemini/config.json`):
+Add Echo to your Gemini CLI configuration (usually located at `~/.gemini/settings.json`):
 
 ```json
 {
