@@ -54,4 +54,22 @@ func TestInitDB(t *testing.T) {
 			})
 		}
 	})
+
+	t.Run("InvalidPath", func(t *testing.T) {
+		_, err := InitDB("")
+		if err == nil {
+			t.Error("Expected error for empty path, got nil")
+		}
+	})
+
+	t.Run("MigrationError", func(t *testing.T) {
+		// We can test this by providing a read-only DB or a closed one
+		dbPath := "readonly.db"
+		os.WriteFile(dbPath, []byte("garbage"), 0400)
+		defer os.Remove(dbPath)
+		_, err := InitDB(dbPath)
+		if err == nil {
+			t.Error("Expected migration error for garbage file, got nil")
+		}
+	})
 }
