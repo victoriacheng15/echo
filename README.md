@@ -12,6 +12,10 @@ Unlike standard LLM sessions that reset context every time the process exits, Ec
 - **Reproducible Environment**: Fully integrated with **Makefile** and **Nix** for consistent builds and CGO-linked SQLite execution.
 - **High Integrity**: Enforces strict data contracts, including 8KB content limits, metadata JSON validation, and enumerated entry types.
 
+## 📚 Documentation
+
+For a deep dive into the system's design, constraints, and historical engineering trade-offs, please refer to the [Documentation](docs/README.md).
+
 ## 🏗️ Tech Stack
 
 ![Go](https://img.shields.io/badge/go-%2300ADD8.svg?style=for-the-badge&logo=go&logoColor=white)
@@ -67,6 +71,7 @@ Echo is engineered for extreme efficiency. Below are the benchmark results achie
 | **StoreMemory** | 0.85 ms | **0.85 ms** | - |
 
 To reproduce these results on your own hardware:
+
 ```bash
 make bench
 ```
