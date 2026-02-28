@@ -1,6 +1,7 @@
 BINARY_NAME=echo
 BUILD_DIR=bin
 LINT_IMAGE=ghcr.io/igorshubovych/markdownlint-cli:v0.44.0
+GO_TAGS=-tags "sqlite_fts5"
 
 # Dynamic Nix Detection
 # 1. Check if nix-shell is available
@@ -25,7 +26,7 @@ endif
 PREFIX ?= $(shell echo $$HOME)/.local
 BIN_DIR = $(PREFIX)/bin
 
-.PHONY: all help update vet format test test-cov build clean check-env install uninstall lint
+.PHONY: all help update vet format test test-cov bench build clean check-env install uninstall lint
 
 # Default target: Run the full development lifecycle
 all: update format vet test build
@@ -43,6 +44,7 @@ help:
 	@echo "  lint       - Run markdownlint via Docker"
 	@echo "  test       - Run tests"
 	@echo "  test-cov   - Run tests with coverage and open HTML report"
+	@echo "  bench      - Run benchmarks"
 	@echo "  build      - Build the binary under bin/"
 	@echo "  install    - Install the binary to $(BIN_DIR)"
 	@echo "  uninstall  - Remove the binary from $(BIN_DIR)"
@@ -81,7 +83,7 @@ update:
 # Run go vet on all packages
 vet:
 	$(NIX_WRAP) echo "Running go vet..." && \
-	go vet ./...
+	go vet $(GO_TAGS) ./...
 
 # Run go fmt on all packages
 format:
@@ -91,20 +93,25 @@ format:
 # Run tests for all packages
 test:
 	$(NIX_WRAP) echo "Running tests..." && \
-	go test ./...
+	go test $(GO_TAGS) ./...
 
 # Run tests with coverage
 test-cov:
 	$(NIX_WRAP) echo "Running tests with coverage..." && \
-	go test -coverprofile=coverage.out ./... && \
+	go test $(GO_TAGS) -coverprofile=coverage.out ./... && \
 	go tool cover -func=coverage.out && \
 	rm -f coverage.out
+
+# Run benchmarks
+bench:
+	$(NIX_WRAP) echo "Running benchmarks..." && \
+	go test $(GO_TAGS) -bench=. -benchmem ./...
 
 # Build the binary under bin/
 build:
 	$(NIX_WRAP) echo "Building binary..." && \
 	mkdir -p $(BUILD_DIR) && \
-	go build -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/mcp-echo
+	go build $(GO_TAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/mcp-echo
 
 # Remove build artifacts
 clean:

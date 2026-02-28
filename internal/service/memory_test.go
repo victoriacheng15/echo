@@ -10,7 +10,11 @@ import (
 
 func TestMemoryService(t *testing.T) {
 	dbPath := "test_service.db"
-	defer os.Remove(dbPath)
+	defer func() {
+		os.Remove(dbPath)
+		os.Remove(dbPath + "-shm")
+		os.Remove(dbPath + "-wal")
+	}()
 
 	sqldb, err := db.InitDB(dbPath)
 	if err != nil {
