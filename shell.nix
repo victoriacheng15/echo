@@ -3,7 +3,9 @@
 pkgs.mkShell {
   nativeBuildInputs = with pkgs; [
     go
-    sqlite
+    (sqlite.override {
+      interactive = true;
+    })
     pkg-config
     gcc
   ];

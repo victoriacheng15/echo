@@ -7,7 +7,11 @@ import (
 
 func TestInitDB(t *testing.T) {
 	dbPath := "test_init.db"
-	defer os.Remove(dbPath)
+	defer func() {
+		os.Remove(dbPath)
+		os.Remove(dbPath + "-shm")
+		os.Remove(dbPath + "-wal")
+	}()
 
 	db, err := InitDB(dbPath)
 	if err != nil {
@@ -66,7 +70,11 @@ func TestInitDB(t *testing.T) {
 		// We can test this by providing a read-only DB or a closed one
 		dbPath := "readonly.db"
 		os.WriteFile(dbPath, []byte("garbage"), 0400)
-		defer os.Remove(dbPath)
+		defer func() {
+		os.Remove(dbPath)
+		os.Remove(dbPath + "-shm")
+		os.Remove(dbPath + "-wal")
+	}()
 		_, err := InitDB(dbPath)
 		if err == nil {
 			t.Error("Expected migration error for garbage file, got nil")

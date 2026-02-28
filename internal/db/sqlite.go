@@ -50,6 +50,33 @@ func runMigrations(db *sql.DB) error {
 
 	CREATE INDEX IF NOT EXISTS idx_context_relevance ON memories(context_key, usage_count DESC, last_used DESC);
 	CREATE INDEX IF NOT EXISTS idx_last_used ON memories(last_used DESC);
+
+	-- FTS5 Virtual Table for high-speed searching
+	CREATE VIRTUAL TABLE IF NOT EXISTS memories_fts USING fts5(
+		content,
+		context_key,
+		content='memories',
+		content_rowid='id'
+	);
+
+	-- Triggers to keep FTS index in sync
+	CREATE TRIGGER IF NOT EXISTS memories_ai AFTER INSERT ON memories BEGIN
+		INSERT INTO memories_fts(rowid, content, context_key) VALUES (new.id, new.content, new.context_key);
+	END;
+
+	CREATE TRIGGER IF NOT EXISTS memories_ad AFTER DELETE ON memories BEGIN
+		INSERT INTO memories_fts(memories_fts, rowid, content, context_key) VALUES('delete', old.id, old.content, old.context_key);
+	END;
+
+	CREATE TRIGGER IF NOT EXISTS memories_au AFTER UPDATE ON memories BEGIN
+		INSERT INTO memories_fts(memories_fts, rowid, content, context_key) VALUES('delete', old.id, old.content, old.context_key);
+		INSERT INTO memories_fts(rowid, content, context_key) VALUES (new.id, new.content, new.context_key);
+	END;
+
+	-- Backfill FTS index with existing data if they are missing
+	INSERT INTO memories_fts(rowid, content, context_key)
+	SELECT id, content, context_key FROM memories
+	WHERE id NOT IN (SELECT rowid FROM memories_fts);
 	`
 
 	_, err := db.Exec(query)

@@ -138,16 +138,35 @@ func (s *MemoryService) RecallMemory(contextKeys []string, limit int) ([]Memory,
 	return memories, nil
 }
 
-// SearchMemories performs a full-text search across all stored memories.
 func (s *MemoryService) SearchMemories(query string) ([]Memory, error) {
-	sqlQuery := `
-	SELECT id, content, context_key, entry_type, usage_count, last_used, metadata
-	FROM memories
-	WHERE content LIKE ?
-	ORDER BY usage_count DESC, last_used DESC;
-	`
+	var sqlQuery string
+	var args []interface{}
 
-	rows, err := s.db.Query(sqlQuery, "%"+query+"%")
+	// For very short queries, use LIKE to ensure substring matching (e.g. "a" matches "apple", "banana", "cherry")
+	// FTS5 is optimized for words and might not match single characters across all words.
+	if len(query) < 3 {
+		sqlQuery = `
+		SELECT id, content, context_key, entry_type, usage_count, last_used, metadata
+		FROM memories
+		WHERE content LIKE ?
+		ORDER BY usage_count DESC, last_used DESC;
+		`
+		args = []interface{}{"%" + query + "%"}
+	} else {
+		// For longer queries, use FTS5 for high-speed indexed search
+		// Quote the query to escape special characters like hyphens (-)
+		ftsQuery := fmt.Sprintf("\"%s\"*", strings.ReplaceAll(query, "\"", ""))
+		sqlQuery = `
+		SELECT memories.id, memories.content, memories.context_key, memories.entry_type, memories.usage_count, memories.last_used, memories.metadata
+		FROM memories
+		JOIN memories_fts ON memories.id = memories_fts.rowid
+		WHERE memories_fts MATCH ?
+		ORDER BY rank, usage_count DESC, last_used DESC;
+		`
+		args = []interface{}{ftsQuery}
+	}
+
+	rows, err := s.db.Query(sqlQuery, args...)
 	if err != nil {
 		return nil, err
 	}

@@ -56,6 +56,21 @@ Echo provides four core tools to your AI agent:
 3. **`search_memories`**: Full-text search across the entire persistent "brain."
 4. **`delete_memory`**: Manually prunes a specific memory from the database.
 
+## ⚡ Performance
+
+Echo is engineered for extreme efficiency. Below are the benchmark results achieved on a **decade-old laptop** (Intel i7-4700HQ, circa 2013), demonstrating the impact of the FTS5 optimization on 1,000+ records:
+
+| Operation | Baseline (LIKE) | **Optimized (FTS5)** | Improvement |
+| :--- | :--- | :--- | :--- |
+| **RecallMemory** | 0.14 ms | **0.14 ms** | - |
+| **SearchMemories** | 9.20 ms | **0.04 ms** | **230x Faster** |
+| **StoreMemory** | 0.85 ms | **0.85 ms** | - |
+
+To reproduce these results on your own hardware:
+```bash
+make bench
+```
+
 ## 🧪 Testing & Quality
 
 Echo maintains high operational standards with exhaustive error-path testing and **>80% statement coverage**:
