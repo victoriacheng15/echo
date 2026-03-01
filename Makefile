@@ -26,7 +26,7 @@ endif
 PREFIX ?= $(shell echo $$HOME)/.local
 BIN_DIR = $(PREFIX)/bin
 
-.PHONY: all help update vet format test test-cov bench build clean check-env install uninstall lint
+.PHONY: all help update vet format test test-cov bench build build-web setup-tailwind clean check-env install uninstall lint
 
 # Default target: Run the full development lifecycle
 all: update format vet test build
@@ -36,20 +36,22 @@ help:
 	@echo "Usage: make [target]"
 	@echo ""
 	@echo "Available targets:"
-	@echo "  all        - Run update, format, vet, test, and build"
-	@echo "  help       - Show this help message"
-	@echo "  update     - Run go mod tidy"
-	@echo "  vet        - Run go vet"
-	@echo "  format     - Run go fmt"
-	@echo "  lint       - Run markdownlint via Docker"
-	@echo "  test       - Run tests"
-	@echo "  test-cov   - Run tests with coverage and open HTML report"
-	@echo "  bench      - Run benchmarks"
-	@echo "  build      - Build the binary under bin/"
-	@echo "  install    - Install the binary to $(BIN_DIR)"
-	@echo "  uninstall  - Remove the binary from $(BIN_DIR)"
-	@echo "  clean      - Remove build artifacts"
-	@echo "  check-env  - Check environment status (Nix, GitHub Actions)"
+	@echo "  all              - Run update, format, vet, test, and build"
+	@echo "  help             - Show this help message"
+	@echo "  update           - Run go mod tidy"
+	@echo "  vet              - Run go vet"
+	@echo "  format           - Run go fmt"
+	@echo "  lint             - Run markdownlint via Docker"
+	@echo "  test             - Run tests"
+	@echo "  test-cov         - Run tests with coverage and open HTML report"
+	@echo "  bench            - Run benchmarks"
+	@echo "  build            - Build the binary under bin/"
+	@echo "  build-web        - Build the static web application site into dist/"
+	@echo "  setup-tailwind   - Download the tailwind css cli"
+	@echo "  install          - Install the binary to $(BIN_DIR)"
+	@echo "  uninstall        - Remove the binary from $(BIN_DIR)"
+	@echo "  clean            - Remove build artifacts"
+	@echo "  check-env        - Check environment status (Nix, GitHub Actions)"
 
 # Run markdownlint via Docker
 lint:
@@ -112,6 +114,23 @@ build:
 	$(NIX_WRAP) echo "Building binary..." && \
 	mkdir -p $(BUILD_DIR) && \
 	go build $(GO_TAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/mcp-echo
+
+# Build the static web application site into dist/
+web-build: setup-tailwind
+	$(NIX_WRAP) echo "Building static web application..." && \
+	rm -rf dist && \
+	mkdir -p dist && \
+	go build -o ssg-builder ./cmd/web/main.go && \
+	./ssg-builder && \
+	./tailwindcss -i ./web/input.css -o ./dist/styles.css --minify && \
+	rm ssg-builder && \
+	rm tailwindcss
+
+# Download the tailwind css cli
+setup-tailwind:
+	echo "Downloading tailwind css cli..." && \
+	curl -sL https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64 -o tailwindcss && \
+	chmod +x tailwindcss
 
 # Remove build artifacts
 clean:

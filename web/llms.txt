@@ -1,0 +1,27 @@
+# {{ .Config.Header.ProjectName }}
+
+{{ .Config.Hero.Headline }}
+
+## Description
+
+{{ .Config.Hero.BriefDescription }}
+
+## Key Features
+
+{{ range .Config.KeyFeatures.Features }}
+- **{{ .Name }}**: {{ .Description }}
+{{ end }}
+
+## Technology Stack
+
+- **Backend**: Go (Golang)
+- **Database**: SQLite with FTS5 (Full-Text Search) and WAL (Write-Ahead Logging)
+- **Interface**: MCP (Model Context Protocol)
+- **Web**: Tailwind CSS v4, Go templates
+
+## Links
+
+- **GitHub**: {{ .Config.Footer.GithubLink }}
+- **LinkedIn**: {{ .Config.Footer.LinkedinLink }}
+- **Website**: {{ .Config.Header.SiteUrl }}
+- **Evolution Registry**: {{ .Config.Header.SiteUrl }}/evolution-registry.json
