@@ -1,0 +1,28 @@
+{{ define "head" }}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ .Config.Header.ProjectName }} - {{ .Config.Hero.Headline }}</title>
+    <meta name="description" content="{{ .Config.Hero.BriefDescription }}">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="{{ .Config.Header.SiteUrl }}">
+    <meta property="og:title" content="{{ .Config.Header.ProjectName }} - {{ .Config.Hero.Headline }}">
+    <meta property="og:description" content="{{ .Config.Hero.BriefDescription }}">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="{{ .Config.Header.SiteUrl }}">
+    <meta property="twitter:title" content="{{ .Config.Header.ProjectName }} - {{ .Config.Hero.Headline }}">
+    <meta property="twitter:description" content="{{ .Config.Hero.BriefDescription }}">
+
+    <link rel="canonical" href="{{ .Config.Header.SiteUrl }}">
+
+    <!-- Link to compiled Tailwind CSS -->
+    <link href="styles.css" rel="stylesheet">
+    <!-- HTMX will be included if needed later via cdn or embedded -->
+</head>
+{{ end }}

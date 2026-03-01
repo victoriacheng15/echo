@@ -1,0 +1,86 @@
+{{ template "head" . }}
+
+<body class="font-sans antialiased text-gray-50 bg-gray-900 w-[90%] max-w-4xl mx-auto min-h-screen flex flex-col">
+    <div class="flex-grow flex flex-col">
+        <!-- Header -->
+        <header class="bg-transparent py-14 flex flex-col gap-y-16 w-full">
+            <nav class="flex justify-between items-center border-b border-gray-800 pb-4">
+                <a href="index.html" class="text-3xl font-bold hover:text-blue-400 transition duration-300">{{
+                    .Config.Header.ProjectName }}</a>
+                <ul class="flex gap-x-6">
+                    <li><a href="evolution.html" class="text-lg hover:text-blue-400 transition duration-300">Evolution</a>
+                    </li>
+                </ul>
+            </nav>
+
+            <!-- Hero Section -->
+            <section class="flex flex-col items-center gap-y-8 text-center w-full">
+                <div class="flex flex-col gap-y-4">
+                    <h2 class="title-primary">{{ .Config.Hero.Headline }}</h2>
+                    <p class="text-xl text-gray-400">{{ .Config.Hero.SubHeadline }}</p>
+                </div>
+                <p class="text-lg text-gray-300">{{ .Config.Hero.BriefDescription }}</p>
+                <div class="flex gap-x-4">
+                    <a href="{{ .Config.Hero.CtaLink }}"
+                        class="bg-blue-600 text-gray-50 text-lg font-semibold px-8 py-3 rounded-lg shadow hover:bg-blue-700 transition duration-300">
+                        {{ .Config.Hero.CtaText }}
+                    </a>
+                    <a href="{{ .Config.Hero.SecondaryCtaLink }}"
+                        class="bg-transparent border border-gray-700 text-gray-50 text-lg font-semibold px-8 py-3 rounded-lg hover:bg-gray-800 transition duration-300">
+                        {{ .Config.Hero.SecondaryCtaText }}
+                    </a>
+                </div>
+            </section>
+        </header>
+
+        <main class="my-10 flex flex-col gap-y-20">
+            <!-- What is Echo? Section -->
+            <section class="flex flex-col items-center w-full">
+                <div class="flex flex-col gap-y-12 w-full">
+                    <h3 class="title-primary text-center">{{ .Config.WhatIsEcho.Title }}</h3>
+                    <div class="flex flex-col gap-y-6 text-lg text-gray-300 text-center">
+                        {{ range .Config.WhatIsEcho.Content }}
+                        <p>{{ . }}</p>
+                        {{ end }}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Key Features Section -->
+            <section class="flex flex-col items-center w-full">
+                <div class="flex flex-col gap-y-12 w-full">
+                    <h3 class="title-primary text-center">{{ .Config.KeyFeatures.Title }}</h3>
+                    <div class="grid md:grid-cols-2 gap-8">
+                        {{ range .Config.KeyFeatures.Features }}
+                        <div
+                            class="bg-gray-800 p-6 rounded-lg shadow-md flex flex-col items-center gap-y-4 text-center border border-gray-700">
+                            <div class="text-5xl text-blue-500">{{ .Icon }}</div>
+                            <div class="flex flex-col gap-y-2">
+                                <h4 class="title-tertiary">{{ .Name }}</h4>
+                                <p class="text-gray-400">{{ .Description }}</p>
+                            </div>
+                        </div>
+                        {{ end }}
+                    </div>
+                </div>
+            </section>
+
+            <!-- Why it Matters Section -->
+            <section class="text-gray-50 flex flex-col items-center w-full">
+                <div class="flex flex-col gap-y-12 w-full">
+                    <h3 class="title-primary text-center">{{ .Config.WhyItMatters.Title }}</h3>
+                    <ul class="list-disc list-inside flex flex-col gap-y-3 text-lg ml-2 sm:ml-8 md:ml-16">
+                        {{ range .Config.WhyItMatters.Points }}
+                        <li>{{ . }}</li>
+                        {{ end }}
+                    </ul>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <!-- Footer -->
+    {{ template "footer" . }}
+</body>
+
+</html>

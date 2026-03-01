@@ -1,0 +1,31 @@
+title: "Project Evolution"
+chapters:
+  - title: "Project Launch: Persistent Memory"
+    intro: "Defining the core foundation of the project by building a resilient 'Long-Term Memory' from day one."
+    timeline:
+      - date: "2026-02-27"
+        title: "Foundation: Persistent Memory Layer"
+        artifacts:
+          - name: "ADR 001: SQLite WAL Mode"
+            url: "docs/decisions/001-sqlite-wal.md"
+        description: |
+          - Launched with a 'Local-First' persistence layer, ensuring AI agents retain critical context across sessions.
+          - Utilized SQLite WAL to enable simultaneous data access and maintain a reliable state without data corruption.
+  - title: "Optimization & Retrieval"
+    intro: "Achieving sub-10ms knowledge retrieval to support real-time agent decision-making."
+    timeline:
+      - date: "2026-02-28"
+        title: "Optimization: Hybrid Search Engine"
+        artifacts:
+          - name: "ADR 002: FTS5 Search Optimization"
+            url: "docs/decisions/002-fts5-search.md"
+        description: |
+          - Delivered a '230x speedup' with sub-10ms retrieval, ensuring agents find relevant information as the knowledge base grows.
+          - Reduced system overhead, allowing the application to run efficiently on low-resource edge devices.
+  - title: "Project Workflow & Iteration"
+    intro: "Building a living project through AI-human collaboration and real-time documentation."
+    timeline:
+      - date: "2026-03-01"
+        title: "Launch: Interactive Project Showcase"
+        description: |
+          - Built a custom Go-based static generator through an iterative AI-human workflow, establishing a 'Living Documentation' system.

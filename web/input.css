@@ -1,0 +1,15 @@
+@import "tailwindcss";
+@source "../web/*.html";
+
+@utility title-primary {
+  @apply text-3xl md:text-4xl font-extrabold text-gray-50 leading-tight;
+}
+
+@utility title-secondary {
+  @apply text-xl md:text-2xl font-bold text-blue-400;
+}
+
+@utility title-tertiary {
+  @apply text-xl font-semibold text-gray-100;
+}
+
