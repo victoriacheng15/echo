@@ -18,6 +18,14 @@ type Config struct {
 		ProjectName string `yaml:"project_name"`
 		SiteUrl     string `yaml:"site_url"`
 	} `yaml:"header"`
+	SystemSpecification struct {
+		Objective           string `yaml:"objective"`
+		Stack               string `yaml:"stack"`
+		Pattern             string `yaml:"pattern"`
+		EntryPoint          string `yaml:"entry_point"`
+		PersistenceStrategy string `yaml:"persistence_strategy"`
+		Observability       string `yaml:"observability"`
+	} `yaml:"system_specification"`
 	Hero struct {
 		Headline         string `yaml:"headline"`
 		SubHeadline      string `yaml:"sub_headline"`
@@ -80,8 +88,6 @@ func main() {
 	}
 }
 
-// Run executes the static site generation logic.
-// Separated from main for testability.
 func Run(webDir, distDir string) error {
 	// Load landing config
 	var appConfig Config
@@ -108,33 +114,8 @@ func Run(webDir, distDir string) error {
 	// Process the data
 	processEvolutionData(&evolutionConfig)
 
-	// Parse templates
-	funcMap := template.FuncMap{
-		"add": func(a, b int) int { return a + b },
-		"sub": func(a, b int) int { return a - b },
-	}
-
-	pattern := filepath.Join(webDir, "*")
-	files, err := filepath.Glob(pattern)
-	if err != nil {
-		return fmt.Errorf("globbing templates: %w", err)
-	}
-
-	var templateFiles []string
-	for _, file := range files {
-		info, err := os.Stat(file)
-		if err == nil && !info.IsDir() {
-			templateFiles = append(templateFiles, file)
-		}
-	}
-
-	if len(templateFiles) == 0 {
-		return fmt.Errorf("no template files found in %s", webDir)
-	}
-
-	tmpl, err := template.New("base").Funcs(funcMap).ParseFiles(templateFiles...)
-	if err != nil {
-		return fmt.Errorf("parsing templates: %w", err)
+	if err := os.MkdirAll(distDir, os.ModePerm); err != nil {
+		return fmt.Errorf("creating dist directory: %w", err)
 	}
 
 	templateData := struct {
@@ -147,23 +128,57 @@ func Run(webDir, distDir string) error {
 		CurrentYear: time.Now().Year(),
 	}
 
-	if err := os.MkdirAll(distDir, os.ModePerm); err != nil {
-		return fmt.Errorf("creating dist directory: %w", err)
+	commonFiles := []string{
+		filepath.Join(webDir, "base.html"),
+		
+		
 	}
 
-	// Generate HTML pages
-	if err := generatePage(tmpl, "index.html", filepath.Join(distDir, "index.html"), templateData); err != nil {
-		return err
-	}
-	if err := generatePage(tmpl, "evolution.html", filepath.Join(distDir, "evolution.html"), templateData); err != nil {
-		return err
-	}
-	if err := generatePage(tmpl, "llms.txt", filepath.Join(distDir, "llms.txt"), templateData); err != nil {
+	// Generate index.html
+	if err := generateIsolatedPage(webDir, "index.html", distDir, commonFiles, templateData); err != nil {
 		return err
 	}
 
-	// Generate evolution-registry.json
-	registryPath := filepath.Join(distDir, "evolution-registry.json")
+	// Generate evolution.html
+	if err := generateIsolatedPage(webDir, "evolution.html", distDir, commonFiles, templateData); err != nil {
+		return err
+	}
+
+	// Generate llms.txt (doesn't use base)
+	llmsTmpl, err := template.ParseFiles(filepath.Join(webDir, "llms.txt"))
+	if err != nil {
+		return fmt.Errorf("parsing llms.txt: %w", err)
+	}
+	llmsOut, err := os.Create(filepath.Join(distDir, "llms.txt"))
+	if err != nil {
+		return err
+	}
+	defer llmsOut.Close()
+	if err := llmsTmpl.Execute(llmsOut, templateData); err != nil {
+		return err
+	}
+
+	// Generate robots.txt
+	robotsTmpl, err := template.ParseFiles(filepath.Join(webDir, "robots.txt"))
+	if err != nil {
+		return fmt.Errorf("parsing robots.txt: %w", err)
+	}
+	robotsOut, err := os.Create(filepath.Join(distDir, "robots.txt"))
+	if err != nil {
+		return err
+	}
+	defer robotsOut.Close()
+	if err := robotsTmpl.Execute(robotsOut, templateData); err != nil {
+		return err
+	}
+
+	// Generate evolution-registry.json under dist/api/
+	apiDir := filepath.Join(distDir, "api")
+	if err := os.MkdirAll(apiDir, os.ModePerm); err != nil {
+		return fmt.Errorf("creating api directory: %w", err)
+	}
+
+	registryPath := filepath.Join(apiDir, "evolution-registry.json")
 	registryFile, err := os.Create(registryPath)
 	if err != nil {
 		return fmt.Errorf("creating evolution-registry.json: %w", err)
@@ -177,6 +192,32 @@ func Run(webDir, distDir string) error {
 	}
 
 	log.Printf("Static site and registry generated successfully in %s/", distDir)
+	return nil
+}
+
+func generateIsolatedPage(webDir, pageName, distDir string, commonFiles []string, data interface{}) error {
+	funcMap := template.FuncMap{
+		"add": func(a, b int) int { return a + b },
+		"sub": func(a, b int) int { return a - b },
+	}
+
+	files := append([]string{filepath.Join(webDir, pageName)}, commonFiles...)
+	tmpl, err := template.New(pageName).Funcs(funcMap).ParseFiles(files...)
+	if err != nil {
+		return fmt.Errorf("parsing templates for %s: %w", pageName, err)
+	}
+
+	outputPath := filepath.Join(distDir, pageName)
+	outputFile, err := os.Create(outputPath)
+	if err != nil {
+		return fmt.Errorf("creating output file %s: %w", outputPath, err)
+	}
+	defer outputFile.Close()
+
+	// Execute the "pageName" template which calls "base" which uses the blocks
+	if err := tmpl.ExecuteTemplate(outputFile, pageName, data); err != nil {
+		return fmt.Errorf("executing template %s: %w", pageName, err)
+	}
 	return nil
 }
 
@@ -214,17 +255,4 @@ func parseDescription(desc string) []string {
 		}
 	}
 	return points
-}
-
-func generatePage(tmpl *template.Template, tmplName string, outputPath string, data interface{}) error {
-	outputFile, err := os.Create(outputPath)
-	if err != nil {
-		return fmt.Errorf("creating output file %s: %w", outputPath, err)
-	}
-	defer outputFile.Close()
-
-	if err := tmpl.ExecuteTemplate(outputFile, tmplName, data); err != nil {
-		return fmt.Errorf("executing template %s: %w", tmplName, err)
-	}
-	return nil
 }

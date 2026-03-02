@@ -137,11 +137,11 @@ chapters:
 
 	// Create dummy templates
 	templates := map[string]string{
-		"index.html":     `{{ .Config.Header.ProjectName }}`,
-		"evolution.html": `{{ .Evolution.Title }}`,
+		"base.html":      `{{ define "base" }}{{ block "header" . }}{{ end }}{{ block "content" . }}{{ end }}{{ end }}`,
+		"index.html":     `{{ define "index.html" }}{{ template "base" . }}{{ end }}`,
+		"evolution.html": `{{ define "evolution.html" }}{{ template "base" . }}{{ end }}`,
 		"llms.txt":       `{{ .Config.Header.ProjectName }}`,
-		"head.html":      `{{ define "head" }}head{{ end }}`,
-		"footer.html":    `{{ define "footer" }}footer{{ end }}`,
+		"robots.txt":     `Allow: /`,
 	}
 
 	for name, content := range templates {
@@ -160,7 +160,8 @@ chapters:
 		"index.html",
 		"evolution.html",
 		"llms.txt",
-		"evolution-registry.json",
+		"robots.txt",
+		"api/evolution-registry.json",
 	}
 
 	for _, name := range expectedFiles {

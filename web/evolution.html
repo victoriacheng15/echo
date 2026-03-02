@@ -1,70 +1,68 @@
-{{ template "head" . }}
+{{ define "evolution.html" }}
+{{ template "base" . }}
+{{ end }}
 
-<body class="font-sans antialiased text-gray-50 bg-gray-900 w-[90%] max-w-4xl mx-auto min-h-screen flex flex-col">
-    <div class="flex-grow flex flex-col">
-        <!-- Header -->
-        <header class="bg-transparent py-14 flex flex-col gap-y-16 w-full border-b border-gray-800">
-            <nav class="flex justify-between items-center pb-4">
-                <a href="index.html" class="text-3xl font-bold hover:text-blue-400 transition duration-300">{{ .Config.Header.ProjectName }}</a>
-                <ul class="flex gap-x-6">
-                    <li><a href="evolution.html" class="text-lg text-blue-400 font-semibold">Evolution</a></li>
+{{ define "header" }}
+<h2 class="title-primary text-center">{{ .Evolution.Title }}</h2>
+<div class="border-b border-gray-800 w-full mt-16"></div>
+{{ end }}
+
+{{ define "content" }}
+<main class="my-16 flex flex-col gap-y-12">
+    {{ $totalChapters := len .Evolution.Chapters }}
+    {{ range $index, $chapter := .Evolution.Chapters }}
+    <details
+        class="group border border-gray-800 rounded-xl overflow-hidden bg-gray-800/30 transition-all duration-300 open:bg-gray-800/50"
+        {{ if eq $index 0 }}open{{ end }}>
+        <summary
+            class="flex items-center justify-between p-6 cursor-pointer list-none hover:bg-gray-800/50 transition-colors duration-300">
+            <div class="flex flex-col gap-y-2">
+                <h3 class="title-secondary group-open:text-blue-300">
+                    Chapter {{ sub $totalChapters $index }}: {{ .Title }}
+                </h3>
+                <p class="text-lg text-gray-400 italic">{{ .Intro }}</p>
+            </div>
+            <div class="text-blue-400 transition-transform duration-300 group-open:rotate-180">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
+                </svg>
+            </div>
+        </summary>
+
+        <div class="p-6 md:p-8 flex flex-col gap-y-12 border-t border-gray-800 ml-4 md:ml-8 border-l-2 pl-8 my-4">
+            {{ range .Timeline }}
+            <div class="relative flex flex-col gap-y-4">
+                <!-- Timeline Dot -->
+                <div class="absolute -left-[41px] top-2 w-4 h-4 rounded-full bg-blue-600 border-4 border-gray-900"></div>
+
+                <div class="flex flex-col md:flex-row md:items-baseline gap-x-4 gap-y-1">
+                    <span class="text-sm font-mono text-blue-500 font-bold uppercase tracking-widest">{{ .Date }}</span>
+                    <h4 class="title-tertiary">{{ .Title }}</h4>
+                </div>
+
+                <ul class="list-disc list-inside flex flex-col gap-y-2 text-lg text-gray-300">
+                    {{ range .Points }}
+                    <li>{{ . }}</li>
+                    {{ end }}
                 </ul>
-            </nav>
-            <h2 class="title-primary text-center">{{ .Evolution.Title }}</h2>
-        </header>
-
-        <main class="my-16 flex flex-col gap-y-12">
-            {{ $totalChapters := len .Evolution.Chapters }}
-            {{ range $index, $chapter := .Evolution.Chapters }}
-            <details class="group border border-gray-800 rounded-xl overflow-hidden bg-gray-800/30 transition-all duration-300 open:bg-gray-800/50" {{ if eq $index 0 }}open{{ end }}>
-                <summary class="flex items-center justify-between p-6 cursor-pointer list-none hover:bg-gray-800/50 transition-colors duration-300">
-                    <div class="flex flex-col gap-y-2">
-                        <h3 class="title-secondary group-open:text-blue-300">
-                            Chapter {{ sub $totalChapters $index }}: {{ .Title }}
-                        </h3>
-                        <p class="text-lg text-gray-400 italic">{{ .Intro }}</p>
-                    </div>
-                    <div class="text-blue-400 transition-transform duration-300 group-open:rotate-180">
-                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path></svg>
-                    </div>
-                </summary>
-
-                <div class="p-6 md:p-8 flex flex-col gap-y-12 border-t border-gray-800 ml-4 md:ml-8 border-l-2 pl-8 my-4">
-                    {{ range .Timeline }}
-                    <div class="relative flex flex-col gap-y-4">
-                        <!-- Timeline Dot -->
-                        <div class="absolute -left-[41px] top-2 w-4 h-4 rounded-full bg-blue-600 border-4 border-gray-900"></div>
-                        
-                        <div class="flex flex-col md:flex-row md:items-baseline gap-x-4 gap-y-1">
-                            <span class="text-sm font-mono text-blue-500 font-bold uppercase tracking-widest">{{ .Date }}</span>
-                            <h4 class="title-tertiary">{{ .Title }}</h4>
-                        </div>
-
-                        <ul class="list-disc list-inside flex flex-col gap-y-2 text-lg text-gray-300">
-                            {{ range .Points }}
-                            <li>{{ . }}</li>
-                            {{ end }}
-                        </ul>
-                        {{ if .Artifacts }}
-                        <div class="flex flex-wrap gap-4 mt-2">
-                            {{ range .Artifacts }}
-                            <a href="{{ .Url }}" class="text-sm bg-gray-800 hover:bg-gray-700 text-blue-400 px-3 py-1 rounded-full border border-gray-700 transition duration-300 flex items-center gap-x-2">
-                                <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/></svg>
-                                {{ .Name }}
-                            </a>
-                            {{ end }}
-                        </div>
-                        {{ end }}
-                    </div>
+                {{ if .Artifacts }}
+                <div class="flex flex-wrap gap-4 mt-2">
+                    {{ range .Artifacts }}
+                    <a href="{{ .Url }}"
+                        class="text-sm bg-gray-800 hover:bg-gray-700 text-blue-400 px-3 py-1 rounded-full border border-gray-700 transition duration-300 flex items-center gap-x-2">
+                        <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                            <path
+                                d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                        </svg>
+                        {{ .Name }}
+                    </a>
                     {{ end }}
                 </div>
-            </details>
+                {{ end }}
+            </div>
             {{ end }}
-        </main>
-    </div>
-
-    <!-- Footer -->
-    {{ template "footer" . }}
-</body>
-
-</html>
+        </div>
+    </details>
+    {{ end }}
+</main>
+{{ end }}
