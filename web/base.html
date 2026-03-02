@@ -4,25 +4,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ .Config.Header.ProjectName }} - {{ .Config.Hero.Headline }}</title>
-    <meta name="description" content="{{ .Config.Hero.BriefDescription }}">
+    <title>{{ .Landing.Header.ProjectName }} - {{ .Landing.Hero.Headline }}</title>
+    <meta name="description" content="{{ .Landing.Hero.BriefDescription }}">
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
-    <meta property="og:url" content="{{ .Config.Header.SiteUrl }}">
-    <meta property="og:title" content="{{ .Config.Header.ProjectName }} - {{ .Config.Hero.Headline }}">
-    <meta property="og:description" content="{{ .Config.Hero.BriefDescription }}">
+    <meta property="og:url" content="{{ .Landing.Header.SiteUrl }}">
+    <meta property="og:title" content="{{ .Landing.Header.ProjectName }} - {{ .Landing.Hero.Headline }}">
+    <meta property="og:description" content="{{ .Landing.Hero.BriefDescription }}">
     
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
-    <meta property="twitter:url" content="{{ .Config.Header.SiteUrl }}">
-    <meta property="twitter:title" content="{{ .Config.Header.ProjectName }} - {{ .Config.Hero.Headline }}">
-    <meta property="twitter:description" content="{{ .Config.Hero.BriefDescription }}">
+    <meta property="twitter:url" content="{{ .Landing.Header.SiteUrl }}">
+    <meta property="twitter:title" content="{{ .Landing.Header.ProjectName }} - {{ .Landing.Hero.Headline }}">
+    <meta property="twitter:description" content="{{ .Landing.Hero.BriefDescription }}">
 
-    <link rel="canonical" href="{{ .Config.Header.SiteUrl }}">
+    <link rel="canonical" href="{{ .Landing.Header.SiteUrl }}">
 
     <!-- Link to compiled Tailwind CSS -->
     <link href="styles.css" rel="stylesheet">
+
+    <!-- Structured Data -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "SoftwareSourceCode",
+      "name": "{{ .Landing.Header.ProjectName }}",
+      "description": "{{ .Landing.SystemSpec.Objective }}",
+      "author": {
+        "@type": "Person",
+        "name": "{{ .Landing.Footer.Author }}",
+        "jobTitle": "Software Developer",
+        "url": "{{ .Landing.Footer.LinkedinLink }}",
+        "sameAs": [
+          "{{ .Landing.Footer.GithubLink }}",
+          "{{ .Landing.Footer.LinkedinLink }}"
+        ]
+      },
+      "codeRepository": "{{ .Landing.Hero.CtaLink }}",
+      "runtimePlatform": ["MCP"],
+      "programmingLanguage": ["Go"]
+    }
+    </script>
 </head>
 
 <body class="font-sans antialiased text-gray-50 bg-gray-900 w-[90%] max-w-4xl mx-auto min-h-screen flex flex-col">
@@ -31,7 +54,7 @@
         <header class="bg-transparent py-14 flex flex-col gap-y-16 w-full">
             <nav class="flex justify-between items-center border-b border-gray-800 pb-4">
                 <a href="index.html" class="text-3xl font-bold hover:text-blue-400 transition duration-300">{{
-                    .Config.Header.ProjectName }}</a>
+                    .Landing.Header.ProjectName }}</a>
                 <ul class="flex gap-x-6">
                     <li><a href="evolution.html" class="text-lg hover:text-blue-400 transition duration-300">Evolution</a>
                     </li>
@@ -48,9 +71,9 @@
     <!-- Footer -->
     <footer
         class="bg-transparent border-t border-gray-800 py-8 flex flex-row items-center justify-center gap-x-8 w-full text-gray-400">
-        <p>&copy; {{ .CurrentYear }} {{ .Config.Footer.Author }}</p>
+        <p>&copy; {{ .CurrentYear }} {{ .Landing.Footer.Author }}</p>
         <div class="flex items-center gap-x-4">
-            <a href="{{ .Config.Footer.GithubLink }}" class="hover:text-blue-400 transition duration-300">
+            <a href="{{ .Landing.Footer.GithubLink }}" class="hover:text-blue-400 transition duration-300">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                     class="feather feather-github">
@@ -60,7 +83,7 @@
                 </svg>
                 <span class="sr-only">GitHub</span>
             </a>
-            <a href="{{ .Config.Footer.LinkedinLink }}" class="hover:text-blue-400 transition duration-300">
+            <a href="{{ .Landing.Footer.LinkedinLink }}" class="hover:text-blue-400 transition duration-300">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                     class="feather feather-linkedin">

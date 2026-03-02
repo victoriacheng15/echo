@@ -3,7 +3,10 @@
 {{ end }}
 
 {{ define "header" }}
-<h2 class="title-primary text-center">{{ .Evolution.Title }}</h2>
+<div class="flex flex-col gap-y-4 text-center">
+    <h2 class="title-primary">{{ .Evolution.PageTitle }}</h2>
+    <p class="text-xl text-gray-400 italic">{{ .Evolution.IntroText }}</p>
+</div>
 <div class="border-b border-gray-800 w-full mt-16"></div>
 {{ end }}
 

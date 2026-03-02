@@ -1,4 +1,5 @@
-title: "Project Evolution"
+page_title: "Project Evolution"
+intro_text: "Tracking the architectural milestones and strategic pivots that define Echo’s journey toward persistent memory for AI agents."
 chapters:
   - title: "Project Launch: Persistent Memory"
     intro: "Defining the core foundation of the project by building a resilient 'Long-Term Memory' from day one."

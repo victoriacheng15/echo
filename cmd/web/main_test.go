@@ -53,7 +53,7 @@ Point 2`,
 }
 
 func TestProcessEvolutionData(t *testing.T) {
-	input := &EvolutionConfig{
+	input := &Evolution{
 		Chapters: []Chapter{
 			{
 				Title: "Chapter 1",
@@ -123,7 +123,8 @@ hero:
 	}
 
 	evolutionYAML := `
-title: "Evolution"
+page_title: "Evolution"
+intro_text: "Intro"
 chapters:
   - title: "Chapter 1"
     timeline:
@@ -140,7 +141,7 @@ chapters:
 		"base.html":      `{{ define "base" }}{{ block "header" . }}{{ end }}{{ block "content" . }}{{ end }}{{ end }}`,
 		"index.html":     `{{ define "index.html" }}{{ template "base" . }}{{ end }}`,
 		"evolution.html": `{{ define "evolution.html" }}{{ template "base" . }}{{ end }}`,
-		"llms.txt":       `{{ .Config.Header.ProjectName }}`,
+		"llms.txt":       `{{ .Landing.Header.ProjectName }}`,
 		"robots.txt":     `Allow: /`,
 	}
 
@@ -174,7 +175,9 @@ chapters:
 
 func TestRunErrors(t *testing.T) {
 	t.Run("MissingWebDir", func(t *testing.T) {
-		err := Run("non-existent-dir", "dist")
+		tempDir, _ := os.MkdirTemp("", "echo-web-err-*")
+		defer os.RemoveAll(tempDir)
+		err := Run("non-existent-dir", filepath.Join(tempDir, "dist"))
 		if err == nil {
 			t.Error("Expected error for missing web dir, got nil")
 		}
@@ -188,7 +191,7 @@ func TestRunErrors(t *testing.T) {
 		os.MkdirAll(contentDir, 0755)
 		os.WriteFile(filepath.Join(contentDir, "landing.yml"), []byte("invalid: yaml: :"), 0644)
 		
-		err := Run(tempDir, "dist")
+		err := Run(tempDir, filepath.Join(tempDir, "dist"))
 		if err == nil {
 			t.Error("Expected error for invalid landing.yml, got nil")
 		}
@@ -203,7 +206,7 @@ func TestRunErrors(t *testing.T) {
 		os.WriteFile(filepath.Join(contentDir, "landing.yml"), []byte("header: {project_name: test}"), 0644)
 		os.WriteFile(filepath.Join(contentDir, "evolution.yml"), []byte("title: test"), 0644)
 		
-		err := Run(tempDir, "dist")
+		err := Run(tempDir, filepath.Join(tempDir, "dist"))
 		if err == nil {
 			t.Error("Expected error for no templates, got nil")
 		}
@@ -221,7 +224,7 @@ func TestRunErrors(t *testing.T) {
 		// Create a malformed template
 		os.WriteFile(filepath.Join(tempDir, "bad.html"), []byte("{{ .Invalid field }}"), 0644)
 		
-		err := Run(tempDir, "dist")
+		err := Run(tempDir, filepath.Join(tempDir, "dist"))
 		if err == nil {
 			t.Error("Expected error for invalid template, got nil")
 		}

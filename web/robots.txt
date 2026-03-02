@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Allow: /api/
 
-Sitemap: {{ .Config.Header.SiteUrl }}/sitemap.xml
+Sitemap: {{ .Landing.Header.SiteUrl }}/sitemap.xml
