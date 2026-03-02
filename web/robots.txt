@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+Allow: /api/
+
+Sitemap: {{ .Config.Header.SiteUrl }}/sitemap.xml

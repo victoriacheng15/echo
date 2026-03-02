@@ -1,27 +1,24 @@
-# {{ .Config.Header.ProjectName }}
+# {{ .Config.Header.ProjectName }} - System Specification
 
-{{ .Config.Hero.Headline }}
+## Objective
 
-## Description
+{{ .Config.SystemSpecification.Objective }}
 
-{{ .Config.Hero.BriefDescription }}
+## Technical Stack
 
-## Key Features
+{{ .Config.SystemSpecification.Stack }}
 
-{{ range .Config.KeyFeatures.Features }}
-- **{{ .Name }}**: {{ .Description }}
-{{ end }}
+## Core Architecture
 
-## Technology Stack
+- **Pattern**: {{ .Config.SystemSpecification.Pattern }}
+- **Entry Point**: {{ .Config.SystemSpecification.EntryPoint }}
+- **Persistence Strategy**: {{ .Config.SystemSpecification.PersistenceStrategy }}
+- **Observability**: {{ .Config.SystemSpecification.Observability }}
 
-- **Backend**: Go (Golang)
-- **Database**: SQLite with FTS5 (Full-Text Search) and WAL (Write-Ahead Logging)
-- **Interface**: MCP (Model Context Protocol)
-- **Web**: Tailwind CSS v4, Go templates
+## Discovery & Registry
 
-## Links
+- **Machine Registry**: {{ .Config.Header.SiteUrl }}/api/evolution-registry.json
 
-- **GitHub**: {{ .Config.Footer.GithubLink }}
-- **LinkedIn**: {{ .Config.Footer.LinkedinLink }}
-- **Website**: {{ .Config.Header.SiteUrl }}
-- **Evolution Registry**: {{ .Config.Header.SiteUrl }}/evolution-registry.json
+## Key 
+
+- **GitHub Repository**: {{ .Config.Hero.CtaLink }}
