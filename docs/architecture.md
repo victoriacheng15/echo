@@ -5,13 +5,13 @@ The Echo MCP Server is designed with a strict separation of concerns, ensuring t
 ## High-Level Data Flow
 
 1. **Client (AI Agent / IDE):** Sends a JSON-RPC 2.0 request over STDIO.
-2. **Transport Layer (`cmd/mcp-echo`):** The `mark3labs/mcp-go` server parses the request, validates the tool name, and extracts the arguments.
+2. **Transport Layer (`cmd/mcp`):** The `mark3labs/mcp-go` server parses the request, validates the tool name, and extracts the arguments.
 3. **Business Logic (`internal/service`):** The `MemoryService` validates the payload (e.g., enforcing the 8KB limit, checking context key regex) and determines the appropriate database interaction.
 4. **Persistence Layer (`internal/db`):** Executes the SQL query against the local `echo.db` SQLite file.
 
 ## Core Components
 
-### 1. Transport Layer (`cmd/mcp-echo`)
+### 1. Transport Layer (`cmd/mcp`)
 
 - Handles the STDIO lifecycle.
 - Registers the 4 core tools with the MCP framework:
