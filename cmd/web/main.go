@@ -13,18 +13,19 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-type Config struct {
+type Landing struct {
 	Header struct {
 		ProjectName string `yaml:"project_name"`
 		SiteUrl     string `yaml:"site_url"`
 	} `yaml:"header"`
-	SystemSpecification struct {
+	SystemSpec struct {
 		Objective           string `yaml:"objective"`
 		Stack               string `yaml:"stack"`
 		Pattern             string `yaml:"pattern"`
 		EntryPoint          string `yaml:"entry_point"`
 		PersistenceStrategy string `yaml:"persistence_strategy"`
 		Observability       string `yaml:"observability"`
+		MachineRegistry     string `yaml:"machine_registry"`
 	} `yaml:"system_specification"`
 	Hero struct {
 		Headline         string `yaml:"headline"`
@@ -58,9 +59,10 @@ type Config struct {
 	} `yaml:"footer"`
 }
 
-type EvolutionConfig struct {
-	Title    string    `yaml:"title"`
-	Chapters []Chapter `yaml:"chapters"`
+type Evolution struct {
+	PageTitle string    `yaml:"page_title"`
+	IntroText string    `yaml:"intro_text"`
+	Chapters  []Chapter `yaml:"chapters"`
 }
 
 type Chapter struct {
@@ -90,41 +92,41 @@ func main() {
 
 func Run(webDir, distDir string) error {
 	// Load landing config
-	var appConfig Config
+	var landing Landing
 	landingPath := filepath.Join(webDir, "content/landing.yml")
 	landingData, err := os.ReadFile(landingPath)
 	if err != nil {
 		return fmt.Errorf("reading landing config: %w", err)
 	}
-	if err := yaml.Unmarshal(landingData, &appConfig); err != nil {
+	if err := yaml.Unmarshal(landingData, &landing); err != nil {
 		return fmt.Errorf("unmarshalling landing config: %w", err)
 	}
 
 	// Load evolution config
-	var evolutionConfig EvolutionConfig
+	var evolution Evolution
 	evolutionPath := filepath.Join(webDir, "content/evolution.yml")
 	evolutionData, err := os.ReadFile(evolutionPath)
 	if err != nil {
 		return fmt.Errorf("reading evolution config: %w", err)
 	}
-	if err := yaml.Unmarshal(evolutionData, &evolutionConfig); err != nil {
+	if err := yaml.Unmarshal(evolutionData, &evolution); err != nil {
 		return fmt.Errorf("unmarshalling evolution config: %w", err)
 	}
 
 	// Process the data
-	processEvolutionData(&evolutionConfig)
+	processEvolutionData(&evolution)
 
 	if err := os.MkdirAll(distDir, os.ModePerm); err != nil {
 		return fmt.Errorf("creating dist directory: %w", err)
 	}
 
 	templateData := struct {
-		Config      Config
-		Evolution   EvolutionConfig
+		Landing     Landing
+		Evolution   Evolution
 		CurrentYear int
 	}{
-		Config:      appConfig,
-		Evolution:   evolutionConfig,
+		Landing:     landing,
+		Evolution:   evolution,
 		CurrentYear: time.Now().Year(),
 	}
 
@@ -186,8 +188,7 @@ func Run(webDir, distDir string) error {
 	defer registryFile.Close()
 	
 	encoder := json.NewEncoder(registryFile)
-	encoder.SetIndent("", "  ")
-	if err := encoder.Encode(evolutionConfig); err != nil {
+	if err := encoder.Encode(evolution); err != nil {
 		return fmt.Errorf("encoding evolution-registry.json: %w", err)
 	}
 
@@ -221,7 +222,7 @@ func generateIsolatedPage(webDir, pageName, distDir string, commonFiles []string
 	return nil
 }
 
-func processEvolutionData(cfg *EvolutionConfig) {
+func processEvolutionData(cfg *Evolution) {
 	// Reverse chapters
 	for i, j := 0, len(cfg.Chapters)-1; i < j; i, j = i+1, j-1 {
 		cfg.Chapters[i], cfg.Chapters[j] = cfg.Chapters[j], cfg.Chapters[i]

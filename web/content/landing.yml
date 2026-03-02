@@ -4,11 +4,12 @@ header:
 
 system_specification:
   objective: "Echo is an MCP (Model Context Protocol) server that acts as a persistent memory layer, providing AI agents with the ability to store and recall knowledge across sessions."
-  stack: "Go (Golang), SQLite (FTS5/WAL), MCP (Model Context Protocol), Tailwind CSS v4"
+  stack: "Go (Golang), SQLite (FTS5/WAL), MCP (Model Context Protocol)"
   pattern: "MCP Server"
   entry_point: "cmd/mcp/main.go"
   persistence_strategy: "Local SQLite with automated FTS5 synchronization"
   observability: "TBD"
+  machine_registry: "/api/evolution-registry.json"
 
 hero:
   headline: "Persistent Memory for Intelligent AI Agents"
@@ -52,7 +53,7 @@ why_it_matters:
     - "Future-Proof: Designed to scale with evolving AI agent requirements."
 
 footer:
-  author: "Victoria Cheng" # Example author
-  github_link: "https://github.com/victoriacheng15" # Example link
-  linkedin_link: "https://linkedin.com/in/victoriacheng15" # Example link
+  author: "Victoria Cheng"
+  github_link: "https://github.com/victoriacheng15"
+  linkedin_link: "https://linkedin.com/in/victoriacheng15"
 

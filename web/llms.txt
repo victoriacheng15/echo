@@ -1,24 +1,24 @@
-# {{ .Config.Header.ProjectName }} - System Specification
+# {{ .Landing.Header.ProjectName }} - System Specification
 
 ## Objective
 
-{{ .Config.SystemSpecification.Objective }}
+{{ .Landing.SystemSpec.Objective }}
 
 ## Technical Stack
 
-{{ .Config.SystemSpecification.Stack }}
+{{ .Landing.SystemSpec.Stack }}
 
 ## Core Architecture
 
-- **Pattern**: {{ .Config.SystemSpecification.Pattern }}
-- **Entry Point**: {{ .Config.SystemSpecification.EntryPoint }}
-- **Persistence Strategy**: {{ .Config.SystemSpecification.PersistenceStrategy }}
-- **Observability**: {{ .Config.SystemSpecification.Observability }}
+- **Pattern**: {{ .Landing.SystemSpec.Pattern }}
+- **Entry Point**: {{ .Landing.SystemSpec.EntryPoint }}
+- **Persistence Strategy**: {{ .Landing.SystemSpec.PersistenceStrategy }}
+- **Observability**: {{ .Landing.SystemSpec.Observability }}
 
 ## Discovery & Registry
 
-- **Machine Registry**: {{ .Config.Header.SiteUrl }}/api/evolution-registry.json
+- **Machine Registry**: {{ .Landing.Header.SiteUrl }}{{ .Landing.SystemSpec.MachineRegistry }}
 
 ## Key 
 
-- **GitHub Repository**: {{ .Config.Hero.CtaLink }}
+- **GitHub Repository**: {{ .Landing.Hero.CtaLink }}
