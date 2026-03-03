@@ -20,14 +20,14 @@ var contextKeyRegex = regexp.MustCompile(`^[a-z]+:[a-z0-9-_/]+$`)
 
 // Memory represents a stored memory.
 type Memory struct {
-	ID              int      `json:"id"`
+	ID              int      `json:"id,omitempty"`
 	Content         string   `json:"content"`
-	ContextKey      string   `json:"context_key"`
-	EntryType       string   `json:"entry_type"`
-	ImportanceScore int      `json:"importance_score"`
-	CreatedAt       string   `json:"created_at"`
-	Source          string   `json:"source"`
-	IsActive        bool     `json:"is_active"`
+	ContextKey      string   `json:"context_key,omitempty"`
+	EntryType       string   `json:"entry_type,omitempty"`
+	ImportanceScore int      `json:"importance_score,omitempty"`
+	CreatedAt       string   `json:"created_at,omitempty"`
+	Source          string   `json:"source,omitempty"`
+	IsActive        bool     `json:"is_active,omitempty"`
 	Tags            []string `json:"tags,omitempty"`
 }
 
