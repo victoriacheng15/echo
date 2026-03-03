@@ -96,6 +96,7 @@ func registerStoreMemoryTool(s *server.MCPServer, svc *service.MemoryService, ru
 			mcp.Description("Type of entry."),
 			mcp.WithStringEnumItems([]string{"directive", "artifact", "fact"}),
 		),
+		mcp.WithArray("tags", mcp.Description("Optional list of tags for categorization (e.g., ['security', 'go-standard'])."), mcp.WithStringItems()),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -111,8 +112,9 @@ func registerStoreMemoryTool(s *server.MCPServer, svc *service.MemoryService, ru
 		if err != nil {
 			return mcp.NewToolResultError("entry_type is required"), nil
 		}
+		tags, _ := request.RequireStringSlice("tags")
 
-		if err := svc.StoreMemory(content, contextKey, entryType); err != nil {
+		if err := svc.StoreMemoryWithTags(content, contextKey, entryType, tags); err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to store memory: %v", err)), nil
 		}
 
@@ -130,6 +132,7 @@ func registerRecallMemoryTool(s *server.MCPServer, svc *service.MemoryService, r
 			mcp.WithStringItems(),
 		),
 		mcp.WithNumber("limit", mcp.Description("Maximum number of memories to return (default 10).")),
+		mcp.WithBoolean("verbose", mcp.Description("If true, includes audit metadata (source, created_at, importance_score) in the output.")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -138,13 +141,26 @@ func registerRecallMemoryTool(s *server.MCPServer, svc *service.MemoryService, r
 			return mcp.NewToolResultError(fmt.Sprintf("context_keys is required: %v", err)), nil
 		}
 		limit := request.GetInt("limit", 10)
+		verbose := request.GetBool("verbose", false)
 
 		memories, err := svc.RecallMemory(contextKeys, limit)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to recall memories: %v", err)), nil
 		}
 
-		data, _ := json.MarshalIndent(memories, "", "  ")
+		if !verbose {
+			for i := range memories {
+				memories[i].ID = 0
+				memories[i].ContextKey = ""
+				memories[i].EntryType = ""
+				memories[i].ImportanceScore = 0
+				memories[i].Source = ""
+				memories[i].CreatedAt = ""
+				memories[i].IsActive = false
+			}
+		}
+
+		data, _ := json.Marshal(memories)
 		return mcp.NewToolResultText(string(data)), nil
 	})
 }
@@ -154,6 +170,7 @@ func registerSearchMemoriesTool(s *server.MCPServer, svc *service.MemoryService,
 	tool := mcp.NewTool("search_memories",
 		mcp.WithDescription(description),
 		mcp.WithString("query", mcp.Required(), mcp.Description("Keyword to search for in memory content.")),
+		mcp.WithBoolean("verbose", mcp.Description("If true, includes audit metadata (source, created_at, importance_score) in the output.")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -161,13 +178,26 @@ func registerSearchMemoriesTool(s *server.MCPServer, svc *service.MemoryService,
 		if err != nil {
 			return mcp.NewToolResultError("query is required"), nil
 		}
+		verbose := request.GetBool("verbose", false)
 
 		memories, err := svc.SearchMemories(query)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to search memories: %v", err)), nil
 		}
 
-		data, _ := json.MarshalIndent(memories, "", "  ")
+		if !verbose {
+			for i := range memories {
+				memories[i].ID = 0
+				memories[i].ContextKey = ""
+				memories[i].EntryType = ""
+				memories[i].ImportanceScore = 0
+				memories[i].Source = ""
+				memories[i].CreatedAt = ""
+				memories[i].IsActive = false
+			}
+		}
+
+		data, _ := json.Marshal(memories)
 		return mcp.NewToolResultText(string(data)), nil
 	})
 }
@@ -191,7 +221,7 @@ func registerDeletionTools(s *server.MCPServer, svc *service.MemoryService) {
 			return mcp.NewToolResultText("No memory found for that query."), nil
 		}
 		// In a real scenario, you might handle multiple matches. For now, return the first one.
-		data, _ := json.MarshalIndent(memories[0], "", "  ")
+		data, _ := json.Marshal(memories[0])
 		return mcp.NewToolResultText(string(data)), nil
 	})
 
