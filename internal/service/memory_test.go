@@ -34,19 +34,17 @@ func TestMemoryService(t *testing.T) {
 			content    string
 			contextKey string
 			entryType  string
-			metadata   string
 			wantErr    bool
 		}{
-			{"valid", "hello", "project:echo", "instruction", `{"a": 1}`, false},
-			{"too_long", string(make([]byte, 8193)), "global", "instruction", "", true},
-			{"invalid_key", "hello", "foo", "instruction", "", true},
-			{"invalid_type", "hello", "global", "foo", "", true},
-			{"invalid_json", "hello", "global", "instruction", "invalid", true},
+			{"valid", "hello", "project:echo", "directive", false},
+			{"too_long", string(make([]byte, 8193)), "global", "directive", true},
+			{"invalid_key", "hello", "foo", "directive", true},
+			{"invalid_type", "hello", "global", "foo", true},
 		}
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				if err := svc.ValidateMemory(tt.content, tt.contextKey, tt.entryType, tt.metadata); (err != nil) != tt.wantErr {
+				if err := svc.ValidateMemory(tt.content, tt.contextKey, tt.entryType); (err != nil) != tt.wantErr {
 					t.Errorf("ValidateMemory() error = %v, wantErr %v", err, tt.wantErr)
 				}
 			})
@@ -56,33 +54,28 @@ func TestMemoryService(t *testing.T) {
 	t.Run("StoreMemory", func(t *testing.T) {
 		cleanup()
 		tests := []struct {
-			name               string
-			content            string
-			contextKey         string
-			entryType          string
-			metadata           string
-			expectedUsageCount int
-			wantErr            bool
+			name       string
+			content    string
+			contextKey string
+			entryType  string
+			wantErr    bool
 		}{
-			{"initial insert", "first memory", "global", "instruction", "", 1, false},
-			{"upsert update", "first memory", "global", "instruction", `{"v": 2}`, 2, false},
-			{"new entry", "second memory", "project:echo", "snippet", "", 1, false},
+			{"initial insert", "first memory", "global", "directive", false},
+			{"upsert update", "first memory", "global", "directive", false},
+			{"new entry", "second memory", "project:echo", "artifact", false},
 		}
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				if err := svc.StoreMemory(tt.content, tt.contextKey, tt.entryType, tt.metadata); (err != nil) != tt.wantErr {
+				if err := svc.StoreMemory(tt.content, tt.contextKey, tt.entryType); (err != nil) != tt.wantErr {
 					t.Fatalf("StoreMemory() error = %v, wantErr %v", err, tt.wantErr)
 				}
 
 				if !tt.wantErr {
-					var usageCount int
-					err = sqldb.QueryRow("SELECT usage_count FROM memories WHERE content = ? AND context_key = ?", tt.content, tt.contextKey).Scan(&usageCount)
+					var content string
+					err = sqldb.QueryRow("SELECT content FROM memories WHERE content = ? AND context_key = ?", tt.content, tt.contextKey).Scan(&content)
 					if err != nil {
-						t.Fatalf("Failed to query usage_count: %v", err)
-					}
-					if usageCount != tt.expectedUsageCount {
-						t.Errorf("Expected usage_count %d, got %d", tt.expectedUsageCount, usageCount)
+						t.Fatalf("Failed to query memory: %v", err)
 					}
 				}
 			})
@@ -92,11 +85,11 @@ func TestMemoryService(t *testing.T) {
 			// Create a service with a closed DB
 			sqldb.Close()
 			defer func() {
-				// Re-open for following tests if needed, but TestMemoryService is almost done
+				// Re-open for following tests
 				sqldb, _ = db.InitDB(dbPath)
 				svc = NewMemoryService(sqldb)
 			}()
-			err := svc.StoreMemory("fail", "global", "instruction", "")
+			err := svc.StoreMemory("fail", "global", "directive")
 			if err == nil {
 				t.Error("Expected DB error for closed connection, got nil")
 			}
@@ -115,7 +108,7 @@ func TestMemoryService(t *testing.T) {
 			{"memory C", "global"},
 		}
 		for _, sd := range seedData {
-			svc.StoreMemory(sd.content, sd.contextKey, "instruction", "")
+			svc.StoreMemory(sd.content, sd.contextKey, "directive")
 		}
 
 		tests := []struct {
@@ -165,7 +158,7 @@ func TestMemoryService(t *testing.T) {
 		// Seed data for SearchMemories
 		seedData := []string{"apple pie", "banana split", "cherry tart"}
 		for _, s := range seedData {
-			svc.StoreMemory(s, "global", "instruction", "")
+			svc.StoreMemory(s, "global", "directive")
 		}
 
 		tests := []struct {
@@ -203,7 +196,7 @@ func TestMemoryService(t *testing.T) {
 
 	t.Run("DeleteMemory", func(t *testing.T) {
 		cleanup()
-		svc.StoreMemory("delete me", "global", "instruction", "")
+		svc.StoreMemory("delete me", "global", "directive")
 
 		tests := []struct {
 			name       string

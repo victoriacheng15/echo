@@ -11,38 +11,42 @@ import (
 
 // Valid entry types for memories.
 var validEntryTypes = map[string]bool{
-	"instruction": true,
-	"snippet":     true,
-	"request":     true,
-	"sentence":    true,
-	"boilerplate": true,
+	"directive": true,
+	"artifact":  true,
+	"fact":      true,
 }
 
 var contextKeyRegex = regexp.MustCompile(`^[a-z]+:[a-z0-9-_/]+$`)
 
 // Memory represents a stored memory.
 type Memory struct {
-	ID         int    `json:"id"`
-	Content    string `json:"content"`
-	ContextKey string `json:"context_key"`
-	EntryType  string `json:"entry_type"`
-	UsageCount int    `json:"usage_count"`
-	LastUsed   string `json:"last_used"`
-	Metadata   string `json:"metadata,omitempty"`
+	ID              int      `json:"id"`
+	Content         string   `json:"content"`
+	ContextKey      string   `json:"context_key"`
+	EntryType       string   `json:"entry_type"`
+	ImportanceScore int      `json:"importance_score"`
+	CreatedAt       string   `json:"created_at"`
+	Source          string   `json:"source"`
+	IsActive        bool     `json:"is_active"`
+	Tags            []string `json:"tags,omitempty"`
 }
 
 // MemoryService provides business logic for memory management.
 type MemoryService struct {
-	db *sql.DB
+	db     *sql.DB
+	Source string // Default source for new memories (e.g., "mcp", "cli")
 }
 
 // NewMemoryService creates a new MemoryService.
 func NewMemoryService(db *sql.DB) *MemoryService {
-	return &MemoryService{db: db}
+	return &MemoryService{
+		db:     db,
+		Source: "mcp",
+	}
 }
 
 // ValidateMemory checks if the memory fields are valid.
-func (s *MemoryService) ValidateMemory(content, contextKey, entryType, metadata string) error {
+func (s *MemoryService) ValidateMemory(content, contextKey, entryType string) error {
 	if len(content) < 1 || len(content) > 8192 {
 		return errors.New("content must be between 1 and 8,192 characters")
 	}
@@ -55,38 +59,39 @@ func (s *MemoryService) ValidateMemory(content, contextKey, entryType, metadata 
 		return fmt.Errorf("invalid entry_type: %s", entryType)
 	}
 
-	if metadata != "" {
-		var js json.RawMessage
-		if err := json.Unmarshal([]byte(metadata), &js); err != nil {
-			return errors.New("metadata must be a valid JSON object")
-		}
-	}
-
 	return nil
 }
 
 // StoreMemory saves or updates a contextual memory.
-func (s *MemoryService) StoreMemory(content, contextKey, entryType, metadata string) error {
-	if err := s.ValidateMemory(content, contextKey, entryType, metadata); err != nil {
+func (s *MemoryService) StoreMemory(content, contextKey, entryType string) error {
+	return s.StoreMemoryWithTags(content, contextKey, entryType, nil)
+}
+
+// StoreMemoryWithTags saves or updates a contextual memory with optional tags.
+func (s *MemoryService) StoreMemoryWithTags(content, contextKey, entryType string, tags []string) error {
+	if err := s.ValidateMemory(content, contextKey, entryType); err != nil {
 		return err
 	}
 
 	query := `
-	INSERT INTO memories (content, context_key, entry_type, metadata)
-	VALUES (?, ?, ?, ?)
+	INSERT INTO memories (content, context_key, entry_type, source, tags)
+	VALUES (?, ?, ?, ?, ?)
 	ON CONFLICT(content, context_key) DO UPDATE SET
-		usage_count = usage_count + 1,
-		last_used = CURRENT_TIMESTAMP,
-		metadata = excluded.metadata,
-		entry_type = excluded.entry_type;
+		entry_type = excluded.entry_type,
+		tags = COALESCE(excluded.tags, memories.tags),
+		importance_score = MIN(memories.importance_score + 1, 10),
+		is_active = 1;
 	`
 
-	var meta sql.NullString
-	if metadata != "" {
-		meta = sql.NullString{String: metadata, Valid: true}
+	var tagsJSON sql.NullString
+	if len(tags) > 0 {
+		data, err := json.Marshal(tags)
+		if err == nil {
+			tagsJSON = sql.NullString{String: string(data), Valid: true}
+		}
 	}
 
-	_, err := s.db.Exec(query, content, contextKey, entryType, meta)
+	_, err := s.db.Exec(query, content, contextKey, entryType, s.Source, tagsJSON)
 	return err
 }
 
@@ -109,10 +114,10 @@ func (s *MemoryService) RecallMemory(contextKeys []string, limit int) ([]Memory,
 	args = append(args, limit)
 
 	query := fmt.Sprintf(`
-	SELECT id, content, context_key, entry_type, usage_count, last_used, metadata
+	SELECT id, content, context_key, entry_type, importance_score, created_at, source, is_active, tags
 	FROM memories
-	WHERE context_key IN (%s)
-	ORDER BY usage_count DESC, last_used DESC
+	WHERE context_key IN (%s) AND is_active = 1
+	ORDER BY importance_score DESC, created_at DESC
 	LIMIT ?;
 	`, strings.Join(placeholders, ","))
 
@@ -122,46 +127,34 @@ func (s *MemoryService) RecallMemory(contextKeys []string, limit int) ([]Memory,
 	}
 	defer rows.Close()
 
-	var memories []Memory
-	for rows.Next() {
-		var m Memory
-		var metadata sql.NullString
-		if err := rows.Scan(&m.ID, &m.Content, &m.ContextKey, &m.EntryType, &m.UsageCount, &m.LastUsed, &metadata); err != nil {
-			return nil, err
-		}
-		if metadata.Valid {
-			m.Metadata = metadata.String
-		}
-		memories = append(memories, m)
-	}
-
-	return memories, nil
+	return s.scanMemories(rows)
 }
 
 func (s *MemoryService) SearchMemories(query string) ([]Memory, error) {
 	var sqlQuery string
 	var args []interface{}
 
-	// For very short queries, use LIKE to ensure substring matching (e.g. "a" matches "apple", "banana", "cherry")
-	// FTS5 is optimized for words and might not match single characters across all words.
+	// For very short queries, use LIKE to ensure substring matching
 	if len(query) < 3 {
 		sqlQuery = `
-		SELECT id, content, context_key, entry_type, usage_count, last_used, metadata
+		SELECT id, content, context_key, entry_type, importance_score, created_at, source, is_active, tags
 		FROM memories
-		WHERE content LIKE ?
-		ORDER BY usage_count DESC, last_used DESC;
+		WHERE content LIKE ? AND is_active = 1
+		ORDER BY importance_score DESC, created_at DESC;
 		`
 		args = []interface{}{"%" + query + "%"}
 	} else {
-		// For longer queries, use FTS5 for high-speed indexed search
-		// Quote the query to escape special characters like hyphens (-)
-		ftsQuery := fmt.Sprintf("\"%s\"*", strings.ReplaceAll(query, "\"", ""))
+		// For longer queries, use FTS5
+		// Include is_active:1 in the match to ensure FTS-native filtering speed
+		ftsQuery := fmt.Sprintf("is_active:1 AND \"%s\"*", strings.ReplaceAll(query, "\"", ""))
 		sqlQuery = `
-		SELECT memories.id, memories.content, memories.context_key, memories.entry_type, memories.usage_count, memories.last_used, memories.metadata
+		SELECT memories.id, memories.content, memories.context_key, memories.entry_type, 
+		       memories.importance_score, memories.created_at, memories.source, memories.is_active, memories.tags
 		FROM memories
 		JOIN memories_fts ON memories.id = memories_fts.rowid
 		WHERE memories_fts MATCH ?
-		ORDER BY rank, usage_count DESC, last_used DESC;
+		ORDER BY memories_fts.importance_score DESC
+		LIMIT 100;
 		`
 		args = []interface{}{ftsQuery}
 	}
@@ -172,19 +165,25 @@ func (s *MemoryService) SearchMemories(query string) ([]Memory, error) {
 	}
 	defer rows.Close()
 
+	return s.scanMemories(rows)
+}
+
+func (s *MemoryService) scanMemories(rows *sql.Rows) ([]Memory, error) {
 	var memories []Memory
 	for rows.Next() {
 		var m Memory
-		var metadata sql.NullString
-		if err := rows.Scan(&m.ID, &m.Content, &m.ContextKey, &m.EntryType, &m.UsageCount, &m.LastUsed, &metadata); err != nil {
+		var tags sql.NullString
+		if err := rows.Scan(
+			&m.ID, &m.Content, &m.ContextKey, &m.EntryType,
+			&m.ImportanceScore, &m.CreatedAt, &m.Source, &m.IsActive, &tags,
+		); err != nil {
 			return nil, err
 		}
-		if metadata.Valid {
-			m.Metadata = metadata.String
+		if tags.Valid {
+			json.Unmarshal([]byte(tags.String), &m.Tags)
 		}
 		memories = append(memories, m)
 	}
-
 	return memories, nil
 }
 
