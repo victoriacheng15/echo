@@ -91,7 +91,7 @@ func TestRegisterTools(t *testing.T) {
 			req.Params.Arguments = map[string]any{
 				"content":     "test content",
 				"context_key": "global",
-				"entry_type":  "instruction",
+				"entry_type":  "directive",
 			}
 
 			res, err := handlers["store_memory"](ctx, req)
@@ -108,10 +108,10 @@ func TestRegisterTools(t *testing.T) {
 				name string
 				args map[string]any
 			}{
-				{"missing content", map[string]any{"context_key": "global", "entry_type": "instruction"}},
-				{"missing key", map[string]any{"content": "a", "entry_type": "instruction"}},
+				{"missing content", map[string]any{"context_key": "global", "entry_type": "directive"}},
+				{"missing key", map[string]any{"content": "a", "entry_type": "directive"}},
 				{"missing type", map[string]any{"content": "a", "context_key": "global"}},
-				{"invalid data", map[string]any{"content": "", "context_key": "global", "entry_type": "instruction"}},
+				{"invalid data", map[string]any{"content": "", "context_key": "global", "entry_type": "directive"}},
 			}
 
 			for _, tc := range cases {

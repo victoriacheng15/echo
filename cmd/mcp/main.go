@@ -80,9 +80,8 @@ func registerStoreMemoryTool(s *server.MCPServer, svc *service.MemoryService) {
 		mcp.WithString("entry_type",
 			mcp.Required(),
 			mcp.Description("Type of entry."),
-			mcp.WithStringEnumItems([]string{"instruction", "snippet", "request", "sentence", "boilerplate"}),
+			mcp.WithStringEnumItems([]string{"directive", "artifact", "fact"}),
 		),
-		mcp.WithString("metadata", mcp.Description("Optional JSON metadata string.")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -98,9 +97,8 @@ func registerStoreMemoryTool(s *server.MCPServer, svc *service.MemoryService) {
 		if err != nil {
 			return mcp.NewToolResultError("entry_type is required"), nil
 		}
-		metadata := request.GetString("metadata", "")
 
-		if err := svc.StoreMemory(content, contextKey, entryType, metadata); err != nil {
+		if err := svc.StoreMemory(content, contextKey, entryType); err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to store memory: %v", err)), nil
 		}
 

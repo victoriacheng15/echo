@@ -32,7 +32,7 @@ func BenchmarkRecallMemory(b *testing.B) {
 			contextKey = "global"
 		}
 		content := fmt.Sprintf("Memory content for entry %d", i)
-		err := svc.StoreMemory(content, contextKey, "instruction", "")
+		err := svc.StoreMemory(content, contextKey, "directive")
 		if err != nil {
 			b.Fatalf("Failed to seed memory: %v", err)
 		}
@@ -66,7 +66,7 @@ func BenchmarkSearchMemories(b *testing.B) {
 	// Seed 1,000 memories to simulate a production-like load
 	for i := 0; i < 1000; i++ {
 		content := fmt.Sprintf("Memory content for entry %d with special-keyword", i)
-		err := svc.StoreMemory(content, "global", "instruction", "")
+		err := svc.StoreMemory(content, "global", "directive")
 		if err != nil {
 			b.Fatalf("Failed to seed memory: %v", err)
 		}
