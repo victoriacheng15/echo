@@ -132,8 +132,6 @@ func Run(webDir, distDir string) error {
 
 	commonFiles := []string{
 		filepath.Join(webDir, "base.html"),
-		
-		
 	}
 
 	// Generate index.html
@@ -186,7 +184,7 @@ func Run(webDir, distDir string) error {
 		return fmt.Errorf("creating evolution-registry.json: %w", err)
 	}
 	defer registryFile.Close()
-	
+
 	encoder := json.NewEncoder(registryFile)
 	if err := encoder.Encode(evolution); err != nil {
 		return fmt.Errorf("encoding evolution-registry.json: %w", err)
@@ -231,7 +229,7 @@ func processEvolutionData(cfg *Evolution) {
 	// Process each chapter
 	for i := range cfg.Chapters {
 		chapter := &cfg.Chapters[i]
-		
+
 		// Reverse timeline
 		for i, j := 0, len(chapter.Timeline)-1; i < j; i, j = i+1, j-1 {
 			chapter.Timeline[i], chapter.Timeline[j] = chapter.Timeline[j], chapter.Timeline[i]

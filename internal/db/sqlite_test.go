@@ -71,10 +71,10 @@ func TestInitDB(t *testing.T) {
 		dbPath := "readonly.db"
 		os.WriteFile(dbPath, []byte("garbage"), 0400)
 		defer func() {
-		os.Remove(dbPath)
-		os.Remove(dbPath + "-shm")
-		os.Remove(dbPath + "-wal")
-	}()
+			os.Remove(dbPath)
+			os.Remove(dbPath + "-shm")
+			os.Remove(dbPath + "-wal")
+		}()
 		_, err := InitDB(dbPath)
 		if err == nil {
 			t.Error("Expected migration error for garbage file, got nil")
