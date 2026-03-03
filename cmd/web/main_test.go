@@ -14,8 +14,8 @@ func TestParseDescription(t *testing.T) {
 		expected []string
 	}{
 		{
-			name: "Single point with hyphen",
-			input: "- Point 1",
+			name:     "Single point with hyphen",
+			input:    "- Point 1",
 			expected: []string{"Point 1"},
 		},
 		{
@@ -186,11 +186,11 @@ func TestRunErrors(t *testing.T) {
 	t.Run("InvalidLandingYAML", func(t *testing.T) {
 		tempDir, _ := os.MkdirTemp("", "echo-web-err-*")
 		defer os.RemoveAll(tempDir)
-		
+
 		contentDir := filepath.Join(tempDir, "content")
 		os.MkdirAll(contentDir, 0755)
 		os.WriteFile(filepath.Join(contentDir, "landing.yml"), []byte("invalid: yaml: :"), 0644)
-		
+
 		err := Run(tempDir, filepath.Join(tempDir, "dist"))
 		if err == nil {
 			t.Error("Expected error for invalid landing.yml, got nil")
@@ -200,12 +200,12 @@ func TestRunErrors(t *testing.T) {
 	t.Run("NoTemplates", func(t *testing.T) {
 		tempDir, _ := os.MkdirTemp("", "echo-web-err-*")
 		defer os.RemoveAll(tempDir)
-		
+
 		contentDir := filepath.Join(tempDir, "content")
 		os.MkdirAll(contentDir, 0755)
 		os.WriteFile(filepath.Join(contentDir, "landing.yml"), []byte("header: {project_name: test}"), 0644)
 		os.WriteFile(filepath.Join(contentDir, "evolution.yml"), []byte("title: test"), 0644)
-		
+
 		err := Run(tempDir, filepath.Join(tempDir, "dist"))
 		if err == nil {
 			t.Error("Expected error for no templates, got nil")
@@ -215,20 +215,18 @@ func TestRunErrors(t *testing.T) {
 	t.Run("InvalidTemplate", func(t *testing.T) {
 		tempDir, _ := os.MkdirTemp("", "echo-web-err-*")
 		defer os.RemoveAll(tempDir)
-		
+
 		contentDir := filepath.Join(tempDir, "content")
 		os.MkdirAll(contentDir, 0755)
 		os.WriteFile(filepath.Join(contentDir, "landing.yml"), []byte("header: {project_name: test}"), 0644)
 		os.WriteFile(filepath.Join(contentDir, "evolution.yml"), []byte("title: test"), 0644)
-		
+
 		// Create a malformed template
 		os.WriteFile(filepath.Join(tempDir, "bad.html"), []byte("{{ .Invalid field }}"), 0644)
-		
+
 		err := Run(tempDir, filepath.Join(tempDir, "dist"))
 		if err == nil {
 			t.Error("Expected error for invalid template, got nil")
 		}
 	})
 }
-
-

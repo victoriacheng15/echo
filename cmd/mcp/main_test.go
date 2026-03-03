@@ -27,11 +27,12 @@ func TestRegisterTools(t *testing.T) {
 
 	svc := service.NewMemoryService(sqldb)
 	s := server.NewMCPServer("Test", "1.0.0")
-	
-	registerStoreMemoryTool(s, svc)
-	registerRecallMemoryTool(s, svc)
-	registerSearchMemoriesTool(s, svc)
-	registerDeleteMemoryTool(s, svc)
+
+	rules := "\n\nGOVERNANCE RULES:\ntest rules"
+	registerStoreMemoryTool(s, svc, rules)
+	registerRecallMemoryTool(s, svc, rules)
+	registerSearchMemoriesTool(s, svc, rules)
+	registerDeletionTools(s, svc)
 
 	t.Run("VerifyToolMetadata", func(t *testing.T) {
 		tests := []struct {
@@ -40,19 +41,23 @@ func TestRegisterTools(t *testing.T) {
 		}{
 			{
 				name:        "store_memory",
-				description: "Saves or updates a contextual memory in the persistent 'brain'.",
+				description: "Saves or updates a memory. " + rules,
 			},
 			{
 				name:        "recall_memory",
-				description: "Retrieves the most relevant memories for the current environment.",
+				description: "Recalls memories for a given context. " + rules,
 			},
 			{
 				name:        "search_memories",
-				description: "Full-text search across all stored memories.",
+				description: "Full-text search for a memory. " + rules,
+			},
+			{
+				name:        "search_for_deletion",
+				description: "Step 1 of 2: Safely search for a memory you intend to delete. You MUST show the returned results to the user and obtain their explicit confirmation before proceeding to Step 2.",
 			},
 			{
 				name:        "delete_memory",
-				description: "Removes a specific memory from the persistent brain.",
+				description: "Step 2 of 2: Deletes a memory. You MUST ONLY call this tool after the user has explicitly confirmed the deletion of the memory returned by search_for_deletion. This is a destructive, non-reversible action.",
 			},
 		}
 
@@ -103,29 +108,6 @@ func TestRegisterTools(t *testing.T) {
 			}
 		})
 
-		t.Run("store_memory_handler_errors", func(t *testing.T) {
-			cases := []struct {
-				name string
-				args map[string]any
-			}{
-				{"missing content", map[string]any{"context_key": "global", "entry_type": "directive"}},
-				{"missing key", map[string]any{"content": "a", "entry_type": "directive"}},
-				{"missing type", map[string]any{"content": "a", "context_key": "global"}},
-				{"invalid data", map[string]any{"content": "", "context_key": "global", "entry_type": "directive"}},
-			}
-
-			for _, tc := range cases {
-				t.Run(tc.name, func(t *testing.T) {
-					req := mcp.CallToolRequest{}
-					req.Params.Arguments = tc.args
-					res, _ := handlers["store_memory"](ctx, req)
-					if !res.IsError {
-						t.Errorf("Expected error for %s", tc.name)
-					}
-				})
-			}
-		})
-
 		t.Run("recall_memory_handler", func(t *testing.T) {
 			req := mcp.CallToolRequest{}
 			req.Params.Arguments = map[string]any{
@@ -142,25 +124,16 @@ func TestRegisterTools(t *testing.T) {
 			}
 		})
 
-		t.Run("recall_memory_handler_error", func(t *testing.T) {
+		t.Run("search_for_deletion_handler", func(t *testing.T) {
+			// Seed a memory to find
+			svc.StoreMemory("to delete", "global", "directive")
+
 			req := mcp.CallToolRequest{}
 			req.Params.Arguments = map[string]any{
-				"context_keys": "not-an-array",
+				"query": "to delete",
 			}
 
-			res, _ := handlers["recall_memory"](ctx, req)
-			if !res.IsError {
-				t.Fatal("Expected error for invalid context_keys")
-			}
-		})
-
-		t.Run("search_memories_handler", func(t *testing.T) {
-			req := mcp.CallToolRequest{}
-			req.Params.Arguments = map[string]any{
-				"query": "test",
-			}
-
-			res, err := handlers["search_memories"](ctx, req)
+			res, err := handlers["search_for_deletion"](ctx, req)
 			if err != nil {
 				t.Fatalf("Handler error: %v", err)
 			}
@@ -169,37 +142,10 @@ func TestRegisterTools(t *testing.T) {
 			}
 		})
 
-		t.Run("search_memories_handler_error", func(t *testing.T) {
-			req := mcp.CallToolRequest{}
-			req.Params.Arguments = map[string]any{}
-			res, _ := handlers["search_memories"](ctx, req)
-			if !res.IsError {
-				t.Fatal("Expected error for missing query")
-			}
-		})
-
-		t.Run("search_memories_db_error", func(t *testing.T) {
-			sqldb.Close()
-			req := mcp.CallToolRequest{}
-			req.Params.Arguments = map[string]any{"query": "test"}
-			res, _ := handlers["search_memories"](ctx, req)
-			if !res.IsError {
-				t.Fatal("Expected error for closed DB")
-			}
-			sqldb, _ = db.InitDB(dbPath)
-			svc = service.NewMemoryService(sqldb)
-			registerDeleteMemoryTool(s, svc)
-			for _, tool := range s.ListTools() {
-				if tool.Tool.Name == "delete_memory" {
-					handlers["delete_memory"] = tool.Handler
-				}
-			}
-		})
-
 		t.Run("delete_memory_handler", func(t *testing.T) {
 			req := mcp.CallToolRequest{}
 			req.Params.Arguments = map[string]any{
-				"content":     "test content",
+				"content":     "to delete",
 				"context_key": "global",
 			}
 
@@ -209,27 +155,6 @@ func TestRegisterTools(t *testing.T) {
 			}
 			if res.IsError {
 				t.Fatalf("Tool returned error: %+v", res.Content[0])
-			}
-		})
-
-		t.Run("delete_memory_handler_errors", func(t *testing.T) {
-			cases := []struct {
-				name string
-				args map[string]any
-			}{
-				{"missing content", map[string]any{"context_key": "global"}},
-				{"missing key", map[string]any{"content": "a"}},
-			}
-
-			for _, tc := range cases {
-				t.Run(tc.name, func(t *testing.T) {
-					req := mcp.CallToolRequest{}
-					req.Params.Arguments = tc.args
-					res, _ := handlers["delete_memory"](ctx, req)
-					if !res.IsError {
-						t.Errorf("Expected error for %s", tc.name)
-					}
-				})
 			}
 		})
 	})

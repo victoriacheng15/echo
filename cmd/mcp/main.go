@@ -38,6 +38,9 @@ func main() {
 	// Initialize Service
 	memorySvc := service.NewMemoryService(sqldb)
 
+	// Load Governance Rules for tool descriptions
+	governanceRules := loadGovernanceRules()
+
 	// Create MCP Server
 	s := server.NewMCPServer(
 		"Echo",
@@ -45,10 +48,10 @@ func main() {
 	)
 
 	// Register Tools
-	registerStoreMemoryTool(s, memorySvc)
-	registerRecallMemoryTool(s, memorySvc)
-	registerSearchMemoriesTool(s, memorySvc)
-	registerDeleteMemoryTool(s, memorySvc)
+	registerStoreMemoryTool(s, memorySvc, governanceRules)
+	registerRecallMemoryTool(s, memorySvc, governanceRules)
+	registerSearchMemoriesTool(s, memorySvc, governanceRules)
+	registerDeletionTools(s, memorySvc)
 
 	log.Printf("Echo MCP Server starting (DB: %s)...", *dbPath)
 
@@ -72,9 +75,20 @@ func getDefaultDBPath() string {
 	return filepath.Join(dataHome, "echo", "echo.db")
 }
 
-func registerStoreMemoryTool(s *server.MCPServer, svc *service.MemoryService) {
+func loadGovernanceRules() string {
+	// Try to load rules/memories.md from current directory
+	data, err := os.ReadFile("rules/memories.md")
+	if err != nil {
+		log.Printf("Warning: rules/memories.md not found. Falling back to default descriptions.")
+		return ""
+	}
+	return "\n\nGOVERNANCE RULES:\n" + string(data)
+}
+
+func registerStoreMemoryTool(s *server.MCPServer, svc *service.MemoryService, rules string) {
+	description := "Saves or updates a memory. " + rules
 	tool := mcp.NewTool("store_memory",
-		mcp.WithDescription("Saves or updates a contextual memory in the persistent 'brain'."),
+		mcp.WithDescription(description),
 		mcp.WithString("content", mcp.Required(), mcp.Description("The memory content (max 8KB).")),
 		mcp.WithString("context_key", mcp.Required(), mcp.Description("Context identifier (e.g., 'project:name' or 'global').")),
 		mcp.WithString("entry_type",
@@ -106,9 +120,10 @@ func registerStoreMemoryTool(s *server.MCPServer, svc *service.MemoryService) {
 	})
 }
 
-func registerRecallMemoryTool(s *server.MCPServer, svc *service.MemoryService) {
+func registerRecallMemoryTool(s *server.MCPServer, svc *service.MemoryService, rules string) {
+	description := "Recalls memories for a given context. " + rules
 	tool := mcp.NewTool("recall_memory",
-		mcp.WithDescription("Retrieves the most relevant memories for the current environment."),
+		mcp.WithDescription(description),
 		mcp.WithArray("context_keys",
 			mcp.Required(),
 			mcp.Description("List of context keys to search (e.g., ['global', 'project:echo'])."),
@@ -134,9 +149,10 @@ func registerRecallMemoryTool(s *server.MCPServer, svc *service.MemoryService) {
 	})
 }
 
-func registerSearchMemoriesTool(s *server.MCPServer, svc *service.MemoryService) {
+func registerSearchMemoriesTool(s *server.MCPServer, svc *service.MemoryService, rules string) {
+	description := "Full-text search for a memory. " + rules
 	tool := mcp.NewTool("search_memories",
-		mcp.WithDescription("Full-text search across all stored memories."),
+		mcp.WithDescription(description),
 		mcp.WithString("query", mcp.Required(), mcp.Description("Keyword to search for in memory content.")),
 	)
 
@@ -156,14 +172,36 @@ func registerSearchMemoriesTool(s *server.MCPServer, svc *service.MemoryService)
 	})
 }
 
-func registerDeleteMemoryTool(s *server.MCPServer, svc *service.MemoryService) {
-	tool := mcp.NewTool("delete_memory",
-		mcp.WithDescription("Removes a specific memory from the persistent brain."),
-		mcp.WithString("content", mcp.Required(), mcp.Description("The content of the memory to delete.")),
-		mcp.WithString("context_key", mcp.Required(), mcp.Description("The context key of the memory to delete.")),
+func registerDeletionTools(s *server.MCPServer, svc *service.MemoryService) {
+	// Step 1: Search for the memory to get its exact content
+	searchTool := mcp.NewTool("search_for_deletion",
+		mcp.WithDescription("Step 1 of 2: Safely search for a memory you intend to delete. You MUST show the returned results to the user and obtain their explicit confirmation before proceeding to Step 2."),
+		mcp.WithString("query", mcp.Required(), mcp.Description("Keyword to find the memory to delete.")),
 	)
+	s.AddTool(searchTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		query, err := request.RequireString("query")
+		if err != nil {
+			return mcp.NewToolResultError("query is required"), nil
+		}
+		memories, err := svc.SearchMemories(query)
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Failed to search for memory: %v", err)), nil
+		}
+		if len(memories) == 0 {
+			return mcp.NewToolResultText("No memory found for that query."), nil
+		}
+		// In a real scenario, you might handle multiple matches. For now, return the first one.
+		data, _ := json.MarshalIndent(memories[0], "", "  ")
+		return mcp.NewToolResultText(string(data)), nil
+	})
 
-	s.AddTool(tool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+	// Step 2: Delete the memory using the exact content and key
+	deleteTool := mcp.NewTool("delete_memory",
+		mcp.WithDescription("Step 2 of 2: Deletes a memory. You MUST ONLY call this tool after the user has explicitly confirmed the deletion of the memory returned by search_for_deletion. This is a destructive, non-reversible action."),
+		mcp.WithString("content", mcp.Required(), mcp.Description("The exact content of the memory to delete.")),
+		mcp.WithString("context_key", mcp.Required(), mcp.Description("The exact context key of the memory to delete.")),
+	)
+	s.AddTool(deleteTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
 		content, err := request.RequireString("content")
 		if err != nil {
 			return mcp.NewToolResultError("content is required"), nil
@@ -172,11 +210,9 @@ func registerDeleteMemoryTool(s *server.MCPServer, svc *service.MemoryService) {
 		if err != nil {
 			return mcp.NewToolResultError("context_key is required"), nil
 		}
-
 		if err := svc.DeleteMemory(content, contextKey); err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to delete memory: %v", err)), nil
 		}
-
 		return mcp.NewToolResultText("Memory deleted successfully."), nil
 	})
 }
