@@ -122,7 +122,7 @@ web-build: setup-tailwind
 	mkdir -p dist && \
 	go build -o ssg-builder ./cmd/web/main.go && \
 	./ssg-builder && \
-	./tailwindcss -i ./web/input.css -o ./dist/styles.css --minify && \
+	./tailwindcss -i ./internal/web/input.css -o ./dist/styles.css --minify && \
 	rm ssg-builder && \
 	rm tailwindcss
 
