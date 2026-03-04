@@ -5,7 +5,7 @@ on:
     branches: ["main"]
     paths:
       - "cmd/web/**"
-      - "web/**"
+      - "internal/web/**"
   workflow_dispatch:
 
 permissions:

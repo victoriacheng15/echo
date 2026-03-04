@@ -1,5 +1,5 @@
 @import "tailwindcss";
-@source "../web/*.html";
+@source "*.html";
 
 @utility title-primary {
   @apply text-3xl md:text-4xl font-extrabold text-gray-50 leading-tight;

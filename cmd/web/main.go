@@ -85,7 +85,7 @@ type Artifact struct {
 }
 
 func main() {
-	if err := Run("web", "dist"); err != nil {
+	if err := Run("internal/web", "dist"); err != nil {
 		log.Fatalf("Error: %v", err)
 	}
 }
