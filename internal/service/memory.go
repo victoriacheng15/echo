@@ -62,13 +62,18 @@ func (s *MemoryService) ValidateMemory(content, contextKey, entryType string) er
 	return nil
 }
 
-// StoreMemory saves or updates a contextual memory.
+// --- CREATE / REINFORCE ---
+// StoreMemory saves a new memory or reinforces an existing one.
 func (s *MemoryService) StoreMemory(content, contextKey, entryType string) error {
 	return s.StoreMemoryWithTags(content, contextKey, entryType, nil)
 }
 
-// StoreMemoryWithTags saves or updates a contextual memory with optional tags.
+// StoreMemoryWithTags saves a new memory or reinforces an existing one with optional tags.
 func (s *MemoryService) StoreMemoryWithTags(content, contextKey, entryType string, tags []string) error {
+	// Normalize inputs for reliable UPSERT identity
+	content = strings.TrimSpace(content)
+	contextKey = strings.ToLower(strings.TrimSpace(contextKey))
+
 	if err := s.ValidateMemory(content, contextKey, entryType); err != nil {
 		return err
 	}
@@ -94,6 +99,8 @@ func (s *MemoryService) StoreMemoryWithTags(content, contextKey, entryType strin
 	_, err := s.db.Exec(query, content, contextKey, entryType, s.Source, tagsJSON)
 	return err
 }
+
+// --- READ ---
 
 // RecallMemory retrieves the most relevant memories for the provided context keys.
 func (s *MemoryService) RecallMemory(contextKeys []string, limit int) ([]Memory, error) {
@@ -130,6 +137,7 @@ func (s *MemoryService) RecallMemory(contextKeys []string, limit int) ([]Memory,
 	return s.scanMemories(rows)
 }
 
+// SearchMemories performs a full-text search on memory content.
 func (s *MemoryService) SearchMemories(query string) ([]Memory, error) {
 	var sqlQuery string
 	var args []interface{}
@@ -168,6 +176,31 @@ func (s *MemoryService) SearchMemories(query string) ([]Memory, error) {
 	return s.scanMemories(rows)
 }
 
+// --- UPDATE ---
+
+// UpdateMemoryContentByID updates the content of a memory identified by its ID.
+func (s *MemoryService) UpdateMemoryContentByID(id int64, newContent string) error {
+	newContent = strings.TrimSpace(newContent)
+	if len(newContent) < 1 || len(newContent) > 8192 {
+		return errors.New("content must be between 1 and 8,192 characters")
+	}
+
+	query := `UPDATE memories SET content = ? WHERE id = ?;`
+	_, err := s.db.Exec(query, newContent, id)
+	return err
+}
+
+// --- DELETE ---
+
+// DeleteMemory removes a specific memory from the database.
+func (s *MemoryService) DeleteMemory(content, contextKey string) error {
+	query := `DELETE FROM memories WHERE content = ? AND context_key = ?;`
+	_, err := s.db.Exec(query, content, contextKey)
+	return err
+}
+
+// --- HELPERS ---
+
 func (s *MemoryService) scanMemories(rows *sql.Rows) ([]Memory, error) {
 	var memories []Memory
 	for rows.Next() {
@@ -185,11 +218,4 @@ func (s *MemoryService) scanMemories(rows *sql.Rows) ([]Memory, error) {
 		memories = append(memories, m)
 	}
 	return memories, nil
-}
-
-// DeleteMemory removes a specific memory from the database.
-func (s *MemoryService) DeleteMemory(content, contextKey string) error {
-	query := `DELETE FROM memories WHERE content = ? AND context_key = ?;`
-	_, err := s.db.Exec(query, content, contextKey)
-	return err
 }

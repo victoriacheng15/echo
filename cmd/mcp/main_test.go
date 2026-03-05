@@ -33,6 +33,7 @@ func TestRegisterTools(t *testing.T) {
 	registerRecallMemoryTool(s, svc, rules)
 	registerSearchMemoriesTool(s, svc, rules)
 	registerDeletionTools(s, svc)
+	registerUpdateMemoryTool(s, svc)
 
 	t.Run("VerifyToolMetadata", func(t *testing.T) {
 		tests := []struct {
@@ -41,7 +42,7 @@ func TestRegisterTools(t *testing.T) {
 		}{
 			{
 				name:        "store_memory",
-				description: "Saves or updates a memory. " + rules,
+				description: "Saves a new memory or reinforces an existing one. " + rules,
 			},
 			{
 				name:        "recall_memory",
@@ -50,6 +51,10 @@ func TestRegisterTools(t *testing.T) {
 			{
 				name:        "search_memories",
 				description: "Full-text search for a memory. " + rules,
+			},
+			{
+				name:        "update_memory",
+				description: "Updates the content (description) of an existing memory by its ID. Use this when the core instruction or information needs to be refined without losing its history (metadata, importance score).",
 			},
 			{
 				name:        "search_for_deletion",
