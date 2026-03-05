@@ -53,12 +53,13 @@ Add Echo to your Gemini CLI configuration (usually located at `~/.gemini/setting
 
 ## 🧠 MCP Tools Interface
 
-Echo provides four core tools to your AI agent:
+Echo provides five core tools to your AI agent:
 
-1. **`store_memory`**: Saves or updates a contextual memory. Performs an `UPSERT` if the content already exists for a given key.
+1. **`store_memory`**: Saves a new memory or reinforces an existing one. Performs an `UPSERT` to increment the importance score if the content already exists.
 2. **`recall_memory`**: Retrieves the most relevant memories for the current environment based on usage count and recency.
 3. **`search_memories`**: Full-text search across the entire persistent "brain."
-4. **`delete_memory`**: Manually prunes a specific memory from the database.
+4. **`update_memory`**: Surgically updates the content of an existing memory by its ID, preserving its historical metadata.
+5. **`delete_memory`**: Manually prunes a specific memory from the database.
 
 ## ⚡ Performance
 
