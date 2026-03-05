@@ -14,10 +14,11 @@ The Echo MCP Server is designed with a strict separation of concerns, ensuring t
 ### 1. Transport Layer (`cmd/mcp`)
 
 - Handles the STDIO lifecycle.
-- Registers the 4 core tools with the MCP framework:
+- Registers the 5 core tools with the MCP framework:
   - `store_memory`
   - `recall_memory`
   - `search_memories`
+  - `update_memory`
   - `delete_memory`
 - Maps raw JSON arguments to strong Go types before passing them to the service.
 
