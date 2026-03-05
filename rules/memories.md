@@ -23,8 +23,9 @@ You MUST use lower-case, hyphenated strings for `context_key`. Follow these patt
 ## 3. Operational Guidelines
 
 1. **Search Before Store:** Always run `search_memories` first to prevent duplicate entries.
-2. **Surgical Updates:** Use `store_memory` with an existing `content` and `context_key` to update an entry (it triggers an `ON CONFLICT` importance reinforcement).
-3. **Three-Stage Deletion:** To delete a memory, you MUST:
+2. **Reinforcement:** Use `store_memory` with an existing `content` and `context_key` to reinforce an entry (it triggers an `ON CONFLICT` importance reinforcement).
+3. **Surgical Updates:** Use `update_memory` with a specific `id` to refine the description (text) of an existing memory without losing its importance score or history.
+4. **Three-Stage Deletion:** To delete a memory, you MUST:
     - a. Use `search_for_deletion` to retrieve the exact memory.
     - b. Display the memory to the user and obtain explicit confirmation.
     - c. Use `delete_memory` ONLY after the user confirms.

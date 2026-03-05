@@ -47,11 +47,12 @@ func main() {
 		"1.0.0",
 	)
 
-	// Register Tools
-	registerStoreMemoryTool(s, memorySvc, governanceRules)
-	registerRecallMemoryTool(s, memorySvc, governanceRules)
-	registerSearchMemoriesTool(s, memorySvc, governanceRules)
-	registerDeletionTools(s, memorySvc)
+	// Register Tools (CRUD Order)
+	registerStoreMemoryTool(s, memorySvc, governanceRules)    // Create/Reinforce
+	registerRecallMemoryTool(s, memorySvc, governanceRules)   // Read (Contextual)
+	registerSearchMemoriesTool(s, memorySvc, governanceRules) // Read (FTS)
+	registerUpdateMemoryTool(s, memorySvc)                    // Update (Surgical)
+	registerDeletionTools(s, memorySvc)                       // Delete
 
 	log.Printf("Echo MCP Server starting (DB: %s)...", *dbPath)
 
@@ -61,32 +62,10 @@ func main() {
 	}
 }
 
-func getDefaultDBPath() string {
-	// 1. Respect XDG_DATA_HOME if set
-	dataHome := os.Getenv("XDG_DATA_HOME")
-	if dataHome == "" {
-		// 2. Fall back to ~/.local/share
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return "echo.db" // Final fallback to current directory
-		}
-		dataHome = filepath.Join(home, ".local", "share")
-	}
-	return filepath.Join(dataHome, "echo", "echo.db")
-}
-
-func loadGovernanceRules() string {
-	// Try to load rules/memories.md from current directory
-	data, err := os.ReadFile("rules/memories.md")
-	if err != nil {
-		log.Printf("Warning: rules/memories.md not found. Falling back to default descriptions.")
-		return ""
-	}
-	return "\n\nGOVERNANCE RULES:\n" + string(data)
-}
+// --- Tool Registration: CREATE ---
 
 func registerStoreMemoryTool(s *server.MCPServer, svc *service.MemoryService, rules string) {
-	description := "Saves or updates a memory. " + rules
+	description := "Saves a new memory or reinforces an existing one. " + rules
 	tool := mcp.NewTool("store_memory",
 		mcp.WithDescription(description),
 		mcp.WithString("content", mcp.Required(), mcp.Description("The memory content (max 8KB).")),
@@ -121,6 +100,8 @@ func registerStoreMemoryTool(s *server.MCPServer, svc *service.MemoryService, ru
 		return mcp.NewToolResultText("Memory stored successfully."), nil
 	})
 }
+
+// --- Tool Registration: READ ---
 
 func registerRecallMemoryTool(s *server.MCPServer, svc *service.MemoryService, rules string) {
 	description := "Recalls memories for a given context. " + rules
@@ -202,6 +183,35 @@ func registerSearchMemoriesTool(s *server.MCPServer, svc *service.MemoryService,
 	})
 }
 
+// --- Tool Registration: UPDATE ---
+
+func registerUpdateMemoryTool(s *server.MCPServer, svc *service.MemoryService) {
+	tool := mcp.NewTool("update_memory",
+		mcp.WithDescription("Updates the content (description) of an existing memory by its ID. Use this when the core instruction or information needs to be refined without losing its history (metadata, importance score)."),
+		mcp.WithNumber("id", mcp.Required(), mcp.Description("The ID of the memory to update.")),
+		mcp.WithString("content", mcp.Required(), mcp.Description("The new content (description) for the memory.")),
+	)
+
+	s.AddTool(tool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		id := request.GetInt("id", 0)
+		if id == 0 {
+			return mcp.NewToolResultError("id is required and must be non-zero"), nil
+		}
+		content, err := request.RequireString("content")
+		if err != nil {
+			return mcp.NewToolResultError("content is required"), nil
+		}
+
+		if err := svc.UpdateMemoryContentByID(int64(id), content); err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Failed to update memory: %v", err)), nil
+		}
+
+		return mcp.NewToolResultText(fmt.Sprintf("Memory %d updated successfully.", int64(id))), nil
+	})
+}
+
+// --- Tool Registration: DELETE ---
+
 func registerDeletionTools(s *server.MCPServer, svc *service.MemoryService) {
 	// Step 1: Search for the memory to get its exact content
 	searchTool := mcp.NewTool("search_for_deletion",
@@ -245,4 +255,30 @@ func registerDeletionTools(s *server.MCPServer, svc *service.MemoryService) {
 		}
 		return mcp.NewToolResultText("Memory deleted successfully."), nil
 	})
+}
+
+// --- Helpers ---
+
+func getDefaultDBPath() string {
+	// 1. Respect XDG_DATA_HOME if set
+	dataHome := os.Getenv("XDG_DATA_HOME")
+	if dataHome == "" {
+		// 2. Fall back to ~/.local/share
+		home, err := os.UserHomeDir()
+		if err != nil {
+			return "echo.db" // Final fallback to current directory
+		}
+		dataHome = filepath.Join(home, ".local", "share")
+	}
+	return filepath.Join(dataHome, "echo", "echo.db")
+}
+
+func loadGovernanceRules() string {
+	// Try to load rules/memories.md from current directory
+	data, err := os.ReadFile("rules/memories.md")
+	if err != nil {
+		log.Printf("Warning: rules/memories.md not found. Falling back to default descriptions.")
+		return ""
+	}
+	return "\n\nGOVERNANCE RULES:\n" + string(data)
 }

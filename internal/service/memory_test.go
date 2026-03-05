@@ -94,6 +94,85 @@ func TestMemoryService(t *testing.T) {
 				t.Error("Expected DB error for closed connection, got nil")
 			}
 		})
+
+		t.Run("Idempotency and Reinforcement", func(t *testing.T) {
+			cleanup()
+			baseContent := "reinforcement-target"
+			baseKey := "project:echo"
+
+			tests := []struct {
+				name          string
+				inputContent  string
+				inputKey      string
+				expectedScore int
+			}{
+				{"initial_store_untrimmed", baseContent + "  ", "Project:Echo", 1},
+				{"reinforce_with_leading_space", "  " + baseContent, baseKey, 2},
+				{"reinforce_with_case_variation", baseContent, "PROJECT:ECHO", 3},
+				{"reinforce_with_mixed_noise", " " + baseContent + " ", " PrOjEcT:eChO ", 4},
+			}
+
+			for _, tt := range tests {
+				t.Run(tt.name, func(t *testing.T) {
+					err := svc.StoreMemory(tt.inputContent, tt.inputKey, "directive")
+					if err != nil {
+						t.Fatalf("StoreMemory failed: %v", err)
+					}
+
+					var score int
+					err = sqldb.QueryRow("SELECT importance_score FROM memories WHERE content = ? AND context_key = ?", baseContent, baseKey).Scan(&score)
+					if err != nil {
+						t.Fatalf("Failed to query memory: %v", err)
+					}
+					if score != tt.expectedScore {
+						t.Errorf("Expected score %d, got %d", tt.expectedScore, score)
+					}
+				})
+			}
+		})
+	})
+
+	t.Run("UpdateMemoryContentByID table-driven", func(t *testing.T) {
+		cleanup()
+		initialContent := "original content"
+		svc.StoreMemory(initialContent, "global", "directive")
+
+		var id int64
+		err := sqldb.QueryRow("SELECT id FROM memories WHERE content = ?", initialContent).Scan(&id)
+		if err != nil {
+			t.Fatalf("Failed to query memory ID: %v", err)
+		}
+
+		tests := []struct {
+			name        string
+			newContent  string
+			wantErr     bool
+			checkResult bool
+		}{
+			{"valid update", "updated content", false, true},
+			{"empty content", "", true, false},
+			{"very long content", string(make([]byte, 8193)), true, false},
+		}
+
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				err := svc.UpdateMemoryContentByID(id, tt.newContent)
+				if (err != nil) != tt.wantErr {
+					t.Errorf("UpdateMemoryContentByID() error = %v, wantErr %v", err, tt.wantErr)
+				}
+
+				if tt.checkResult && !tt.wantErr {
+					var updatedContent string
+					err = sqldb.QueryRow("SELECT content FROM memories WHERE id = ?", id).Scan(&updatedContent)
+					if err != nil {
+						t.Fatalf("Failed to query updated content: %v", err)
+					}
+					if updatedContent != tt.newContent {
+						t.Errorf("Expected content %q, got %q", tt.newContent, updatedContent)
+					}
+				}
+			})
+		}
 	})
 
 	t.Run("RecallMemory", func(t *testing.T) {
