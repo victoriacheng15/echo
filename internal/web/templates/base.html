@@ -73,7 +73,7 @@
         class="bg-transparent border-t border-gray-800 py-8 flex flex-row items-center justify-center gap-x-8 w-full text-gray-400">
         <p>&copy; {{ .CurrentYear }} {{ .Landing.Footer.Author }}</p>
         <div class="flex items-center gap-x-4">
-            <a href="{{ .Landing.Footer.GithubLink }}" class="hover:text-blue-400 transition duration-300">
+            <a href="{{ .Landing.Footer.GithubLink }}" class="hover:text-blue-400 transition duration-300" target="_blank" rel="noopener noreferrer">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                     class="feather feather-github">
@@ -83,7 +83,7 @@
                 </svg>
                 <span class="sr-only">GitHub</span>
             </a>
-            <a href="{{ .Landing.Footer.LinkedinLink }}" class="hover:text-blue-400 transition duration-300">
+            <a href="{{ .Landing.Footer.LinkedinLink }}" class="hover:text-blue-400 transition duration-300" target="_blank" rel="noopener noreferrer">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
                     stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
                     class="feather feather-linkedin">
