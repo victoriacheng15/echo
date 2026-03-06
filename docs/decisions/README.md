@@ -6,6 +6,7 @@ This directory contains the Architecture Decision Records for the Echo MCP Serve
 
 | ADR | Title | Status |
 | :--- | :--- | :--- |
+| [003](003-duckdb-analytics.md) | Implement Zero-Config Analytics via DuckDB and Telemetry | 🟢 Proposed |
 | [002](002-fts5-search.md) | Implement FTS5 Inverted Index for Keyword Search | 🔵 Accepted |
 | [001](001-sqlite-wal.md) | Use SQLite with WAL Mode for Persistent Memory | 🔵 Accepted |
 
