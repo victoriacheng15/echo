@@ -30,3 +30,14 @@ chapters:
         title: "Launch: Interactive Project Showcase"
         description: |
           - Built a custom Go-based static generator through an iterative AI-human workflow, establishing a 'Living Documentation' system.
+  - title: "Knowledge ROI & Unit Economics"
+    intro: "Integrating an analytics framework to measure the cost and value of every interaction."
+    timeline:
+      - date: "2026-03-06"
+        title: "Proposed: Zero-Config DuckDB Analytics"
+        artifacts:
+          - name: "ADR 003: DuckDB Analytics"
+            url: "docs/decisions/003-duckdb-analytics.md"
+        description: |
+          - Proposed a high-fidelity telemetry system to track 'Cost-per-Project' and 'Carbon Footprint' using an embedded DuckDB OLAP layer.
+          - Designed an autonomous 'Analytical Feedback Loop' to decay low-value context, aiming to optimize the AI 'Brain' for high-signal interactions.
