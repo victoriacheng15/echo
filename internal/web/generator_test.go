@@ -1,4 +1,4 @@
-package main
+package web
 
 import (
 	"os"
@@ -93,7 +93,7 @@ func TestProcessEvolutionData(t *testing.T) {
 	}
 }
 
-func TestRun(t *testing.T) {
+func TestGenerate(t *testing.T) {
 	// Create temporary directory for testing
 	tempDir, err := os.MkdirTemp("", "echo-web-test-*")
 	if err != nil {
@@ -103,7 +103,8 @@ func TestRun(t *testing.T) {
 
 	webDir := filepath.Join(tempDir, "web")
 	distDir := filepath.Join(tempDir, "dist")
-	contentDir := filepath.Join(webDir, "content")
+	templateDir := filepath.Join(webDir, "templates")
+	contentDir := filepath.Join(templateDir, "content")
 
 	// Create directory structure
 	if err := os.MkdirAll(contentDir, 0755); err != nil {
@@ -146,14 +147,14 @@ chapters:
 	}
 
 	for name, content := range templates {
-		if err := os.WriteFile(filepath.Join(webDir, name), []byte(content), 0644); err != nil {
+		if err := os.WriteFile(filepath.Join(templateDir, name), []byte(content), 0644); err != nil {
 			t.Fatalf("Failed to write template %s: %v", name, err)
 		}
 	}
 
 	// Run the generator
-	if err := Run(webDir, distDir); err != nil {
-		t.Fatalf("Run() failed: %v", err)
+	if err := Generate(webDir, distDir); err != nil {
+		t.Fatalf("Generate() failed: %v", err)
 	}
 
 	// Verify output files exist
@@ -173,11 +174,11 @@ chapters:
 	}
 }
 
-func TestRunErrors(t *testing.T) {
+func TestGenerateErrors(t *testing.T) {
 	t.Run("MissingWebDir", func(t *testing.T) {
 		tempDir, _ := os.MkdirTemp("", "echo-web-err-*")
 		defer os.RemoveAll(tempDir)
-		err := Run("non-existent-dir", filepath.Join(tempDir, "dist"))
+		err := Generate("non-existent-dir", filepath.Join(tempDir, "dist"))
 		if err == nil {
 			t.Error("Expected error for missing web dir, got nil")
 		}
@@ -191,7 +192,7 @@ func TestRunErrors(t *testing.T) {
 		os.MkdirAll(contentDir, 0755)
 		os.WriteFile(filepath.Join(contentDir, "landing.yml"), []byte("invalid: yaml: :"), 0644)
 
-		err := Run(tempDir, filepath.Join(tempDir, "dist"))
+		err := Generate(tempDir, filepath.Join(tempDir, "dist"))
 		if err == nil {
 			t.Error("Expected error for invalid landing.yml, got nil")
 		}
@@ -206,7 +207,7 @@ func TestRunErrors(t *testing.T) {
 		os.WriteFile(filepath.Join(contentDir, "landing.yml"), []byte("header: {project_name: test}"), 0644)
 		os.WriteFile(filepath.Join(contentDir, "evolution.yml"), []byte("title: test"), 0644)
 
-		err := Run(tempDir, filepath.Join(tempDir, "dist"))
+		err := Generate(tempDir, filepath.Join(tempDir, "dist"))
 		if err == nil {
 			t.Error("Expected error for no templates, got nil")
 		}
@@ -224,7 +225,7 @@ func TestRunErrors(t *testing.T) {
 		// Create a malformed template
 		os.WriteFile(filepath.Join(tempDir, "bad.html"), []byte("{{ .Invalid field }}"), 0644)
 
-		err := Run(tempDir, filepath.Join(tempDir, "dist"))
+		err := Generate(tempDir, filepath.Join(tempDir, "dist"))
 		if err == nil {
 			t.Error("Expected error for invalid template, got nil")
 		}
