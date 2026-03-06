@@ -35,7 +35,12 @@ func NewServer(memorySvc *service.MemoryService) *server.MCPServer {
 }
 
 // --- Tool Registration: CREATE ---
-
+// registerStoreMemoryTool registers the 'store_memory' tool.
+// Inputs:
+// - content (string, required): The memory content (max 8KB).
+// - context_key (string, required): Context identifier (e.g., 'project:name' or 'global').
+// - entry_type (string, required): Type of entry (directive, artifact, fact).
+// - tags (string array, optional): Optional list of tags for categorization.
 func registerStoreMemoryTool(s *server.MCPServer, svc *service.MemoryService, rules string) {
 	description := "Saves a new memory or reinforces an existing one. " + rules
 	tool := mcp.NewTool("store_memory",
@@ -74,7 +79,11 @@ func registerStoreMemoryTool(s *server.MCPServer, svc *service.MemoryService, ru
 }
 
 // --- Tool Registration: READ ---
-
+// registerRecallMemoryTool registers the 'recall_memory' tool.
+// Inputs:
+// - context_keys (string array, required): List of context keys to search.
+// - limit (number, optional): Maximum number of memories to return (default 10).
+// - verbose (boolean, optional): If true, includes audit metadata in the output.
 func registerRecallMemoryTool(s *server.MCPServer, svc *service.MemoryService, rules string) {
 	description := "Recalls memories for a given context. " + rules
 	tool := mcp.NewTool("recall_memory",
@@ -112,6 +121,11 @@ func registerRecallMemoryTool(s *server.MCPServer, svc *service.MemoryService, r
 	})
 }
 
+// --- Tool Registration: SEARCH ---
+// registerSearchMemoriesTool registers the 'search_memories' tool.
+// Inputs:
+// - query (string, required): Keyword to search for in memory content.
+// - verbose (boolean, optional): If true, includes audit metadata in the output.
 func registerSearchMemoriesTool(s *server.MCPServer, svc *service.MemoryService, rules string) {
 	description := "Full-text search for a memory. " + rules
 	tool := mcp.NewTool("search_memories",
@@ -144,7 +158,10 @@ func registerSearchMemoriesTool(s *server.MCPServer, svc *service.MemoryService,
 }
 
 // --- Tool Registration: UPDATE ---
-
+// registerUpdateMemoryTool registers the 'update_memory' tool.
+// Inputs:
+// - id (number, required): The ID of the memory to update.
+// - content (string, required): The new content for the memory.
 func registerUpdateMemoryTool(s *server.MCPServer, svc *service.MemoryService) {
 	tool := mcp.NewTool("update_memory",
 		mcp.WithDescription("Updates the content (description) of an existing memory by its ID. Use this when the core instruction or information needs to be refined without losing its history (metadata, importance score)."),
@@ -171,7 +188,12 @@ func registerUpdateMemoryTool(s *server.MCPServer, svc *service.MemoryService) {
 }
 
 // --- Tool Registration: DELETE ---
-
+// registerDeletionTools registers 'search_for_deletion' and 'delete_memory' tools.
+// search_for_deletion Inputs:
+// - query (string, required): Keyword to find the memory to delete.
+// delete_memory Inputs:
+// - content (string, required): The exact content of the memory to delete.
+// - context_key (string, required): The exact context key of the memory to delete.
 func registerDeletionTools(s *server.MCPServer, svc *service.MemoryService) {
 	// Step 1: Search for the memory to get its exact content
 	searchTool := mcp.NewTool("search_for_deletion",
@@ -234,6 +256,7 @@ func GetDefaultDBPath() string {
 	return filepath.Join(dataHome, "echo", "echo.db")
 }
 
+// loadGovernanceRules reads the memory governance rules from rules/memories.md.
 func loadGovernanceRules() string {
 	// Try to load rules/memories.md from current directory
 	data, err := os.ReadFile("rules/memories.md")
@@ -244,6 +267,7 @@ func loadGovernanceRules() string {
 	return "\n\nGOVERNANCE RULES:\n" + string(data)
 }
 
+// cleanMemoryForResults strips metadata from memories for non-verbose output.
 func cleanMemoryForResults(m service.Memory) service.Memory {
 	return service.Memory{
 		Content: m.Content,
