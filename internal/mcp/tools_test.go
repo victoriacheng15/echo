@@ -86,7 +86,7 @@ func TestGetDefaultDBPath(t *testing.T) {
 		os.Setenv("XDG_DATA_HOME", "/tmp/xdg")
 		defer os.Setenv("XDG_DATA_HOME", old)
 
-		path := GetDefaultDBPath()
+		path := db.GetDefaultDBPath()
 		expected := "/tmp/xdg/echo/echo.db"
 		if path != expected {
 			t.Errorf("Expected %s, got %s", expected, path)

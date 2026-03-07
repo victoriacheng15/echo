@@ -13,7 +13,7 @@ import (
 )
 
 func main() {
-	defaultDB := mcp.GetDefaultDBPath()
+	defaultDB := db.GetDefaultDBPath()
 	dbPath := flag.String("db", defaultDB, "Path to the SQLite database file")
 	flag.Parse()
 
@@ -33,7 +33,39 @@ func main() {
 	defer sqldb.Close()
 
 	// Initialize Service
-	memorySvc := service.NewMemoryService(sqldb)
+	dataDir := db.GetDefaultDataDir()
+	telemetrySvc, err := service.NewTelemetryService(dataDir, 100)
+	if err != nil {
+		log.Printf("Warning: Failed to initialize telemetry: %v", err)
+	} else {
+		defer telemetrySvc.Close()
+	}
+
+	rateSvc, err := service.NewRateService(filepath.Join("configs", "rates.yml"))
+	if err != nil {
+		log.Printf("Warning: Failed to initialize rate card: %v", err)
+	}
+
+	analyticsSvc, err := service.NewAnalyticsService(dataDir)
+	if err != nil {
+		log.Printf("Warning: Failed to initialize analytics engine: %v", err)
+	} else {
+		defer analyticsSvc.Close()
+	}
+
+	memorySvc := service.NewMemoryService(sqldb).WithTelemetry(telemetrySvc)
+
+	// Create Knowledge Refiner
+	if analyticsSvc != nil && rateSvc != nil {
+		refiner := service.NewKnowledgeRefiner(memorySvc, analyticsSvc, rateSvc)
+		// Milestone 4: Start background refiner loop (Simple check every 50 events)
+		// For now, we'll trigger it once at startup for demonstration.
+		go func() {
+			if err := refiner.Refine(); err != nil {
+				log.Printf("Knowledge Refiner error: %v", err)
+			}
+		}()
+	}
 
 	// Create MCP Server
 	s := mcp.NewServer(memorySvc)

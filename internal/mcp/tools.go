@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"path/filepath"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -240,21 +239,6 @@ func registerDeletionTools(s *server.MCPServer, svc *service.MemoryService) {
 }
 
 // --- Helpers ---
-
-// GetDefaultDBPath returns the standard path for the Echo database.
-func GetDefaultDBPath() string {
-	// 1. Respect XDG_DATA_HOME if set
-	dataHome := os.Getenv("XDG_DATA_HOME")
-	if dataHome == "" {
-		// 2. Fall back to ~/.local/share
-		home, err := os.UserHomeDir()
-		if err != nil {
-			return "echo.db" // Final fallback to current directory
-		}
-		dataHome = filepath.Join(home, ".local", "share")
-	}
-	return filepath.Join(dataHome, "echo", "echo.db")
-}
 
 // loadGovernanceRules reads the memory governance rules from rules/memories.md.
 func loadGovernanceRules() string {

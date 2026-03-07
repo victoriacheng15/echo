@@ -6,8 +6,11 @@ pkgs.mkShell {
     (sqlite.override {
       interactive = true;
     })
+    duckdb
     pkg-config
     gcc
+    openssl
+    curl
   ];
 
   shellHook = ''

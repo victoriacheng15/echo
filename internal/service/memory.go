@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"time"
 )
 
 // Valid entry types for memories.
@@ -33,8 +34,9 @@ type Memory struct {
 
 // MemoryService provides business logic for memory management.
 type MemoryService struct {
-	db     *sql.DB
-	Source string // Default source for new memories (e.g., "mcp", "cli")
+	db        *sql.DB
+	Source    string // Default source for new memories (e.g., "mcp", "cli")
+	Telemetry *TelemetryService
 }
 
 // NewMemoryService creates a new MemoryService.
@@ -43,6 +45,12 @@ func NewMemoryService(db *sql.DB) *MemoryService {
 		db:     db,
 		Source: "mcp",
 	}
+}
+
+// WithTelemetry attaches a telemetry service for instrumentation.
+func (s *MemoryService) WithTelemetry(ts *TelemetryService) *MemoryService {
+	s.Telemetry = ts
+	return s
 }
 
 // ValidateMemory checks if the memory fields are valid.
@@ -70,6 +78,7 @@ func (s *MemoryService) StoreMemory(content, contextKey, entryType string) error
 
 // StoreMemoryWithTags saves a new memory or reinforces an existing one with optional tags.
 func (s *MemoryService) StoreMemoryWithTags(content, contextKey, entryType string, tags []string) error {
+	start := time.Now()
 	// Normalize inputs for reliable UPSERT identity
 	content = strings.TrimSpace(content)
 	contextKey = strings.ToLower(strings.TrimSpace(contextKey))
@@ -97,6 +106,20 @@ func (s *MemoryService) StoreMemoryWithTags(content, contextKey, entryType strin
 	}
 
 	_, err := s.db.Exec(query, content, contextKey, entryType, s.Source, tagsJSON)
+
+	// Emit telemetry
+	if s.Telemetry != nil {
+		latency := time.Since(start).Milliseconds()
+		s.Telemetry.Emit(TelemetryEvent{
+			Tool:            "store",
+			SourceInterface: s.Source,
+			ContextKey:      contextKey,
+			LatencyMs:       latency,
+			IsHit:           true, // Store is always a hit/action
+			Joules:          s.Telemetry.CalculateJoules(latency),
+		})
+	}
+
 	return err
 }
 
@@ -104,6 +127,7 @@ func (s *MemoryService) StoreMemoryWithTags(content, contextKey, entryType strin
 
 // RecallMemory retrieves the most relevant memories for the provided context keys.
 func (s *MemoryService) RecallMemory(contextKeys []string, limit int) ([]Memory, error) {
+	start := time.Now()
 	if len(contextKeys) == 0 {
 		return nil, errors.New("context_keys cannot be empty")
 	}
@@ -134,11 +158,32 @@ func (s *MemoryService) RecallMemory(contextKeys []string, limit int) ([]Memory,
 	}
 	defer rows.Close()
 
-	return s.scanMemories(rows)
+	memories, err := s.scanMemories(rows)
+
+	// Emit telemetry
+	if s.Telemetry != nil {
+		latency := time.Since(start).Milliseconds()
+		var ids []int64
+		for _, m := range memories {
+			ids = append(ids, int64(m.ID))
+		}
+		s.Telemetry.Emit(TelemetryEvent{
+			Tool:            "recall",
+			SourceInterface: s.Source,
+			ContextKey:      strings.Join(contextKeys, ","),
+			MemoryIDs:       ids,
+			LatencyMs:       latency,
+			IsHit:           len(memories) > 0,
+			Joules:          s.Telemetry.CalculateJoules(latency),
+		})
+	}
+
+	return memories, err
 }
 
 // SearchMemories performs a full-text search on memory content.
 func (s *MemoryService) SearchMemories(query string) ([]Memory, error) {
+	start := time.Now()
 	var sqlQuery string
 	var args []interface{}
 
@@ -173,7 +218,27 @@ func (s *MemoryService) SearchMemories(query string) ([]Memory, error) {
 	}
 	defer rows.Close()
 
-	return s.scanMemories(rows)
+	memories, err := s.scanMemories(rows)
+
+	// Emit telemetry
+	if s.Telemetry != nil {
+		latency := time.Since(start).Milliseconds()
+		var ids []int64
+		for _, m := range memories {
+			ids = append(ids, int64(m.ID))
+		}
+		s.Telemetry.Emit(TelemetryEvent{
+			Tool:            "search",
+			SourceInterface: s.Source,
+			ContextKey:      "fts5:search", // Search often spans contexts
+			MemoryIDs:       ids,
+			LatencyMs:       latency,
+			IsHit:           len(memories) > 0,
+			Joules:          s.Telemetry.CalculateJoules(latency),
+		})
+	}
+
+	return memories, err
 }
 
 // --- UPDATE ---
@@ -197,6 +262,46 @@ func (s *MemoryService) DeleteMemory(content, contextKey string) error {
 	query := `DELETE FROM memories WHERE content = ? AND context_key = ?;`
 	_, err := s.db.Exec(query, content, contextKey)
 	return err
+}
+
+// DecayImportance reduces the importance score of specific memories.
+// If a memory's score hits 0, it is marked as inactive.
+func (s *MemoryService) DecayImportance(ids []int64, step int) error {
+	if len(ids) == 0 {
+		return nil
+	}
+
+	// Use placeholder for IDs
+	placeholders := make([]string, len(ids))
+	args := make([]interface{}, len(ids)+1)
+	args[0] = step
+	for i, id := range ids {
+		placeholders[i] = "?"
+		args[i+1] = id
+	}
+
+	query := fmt.Sprintf(`
+	UPDATE memories 
+	SET 
+		importance_score = MAX(importance_score - ?, 0),
+		is_active = CASE WHEN importance_score - ? <= 0 THEN 0 ELSE 1 END
+	WHERE id IN (%s);
+	`, strings.Join(placeholders, ","))
+
+	// Need to duplicate step for the CASE statement
+	finalArgs := make([]interface{}, 0, len(args)+1)
+	finalArgs = append(finalArgs, step, step)
+	finalArgs = append(finalArgs, args[1:]...)
+
+	_, err := s.db.Exec(query, finalArgs...)
+	return err
+}
+
+// GetTotalEventCount returns the total number of memories stored (as a proxy for activity).
+func (s *MemoryService) GetTotalEventCount() (int, error) {
+	var count int
+	err := s.db.QueryRow("SELECT COUNT(*) FROM memories").Scan(&count)
+	return count, err
 }
 
 // --- HELPERS ---
