@@ -1,6 +1,6 @@
 # ADR 003: Zero-Config DuckDB Analytics
 
-- **Status:** Proposed
+- **Status:** Accepted
 - **Date:** 2026-03-06
 - **Author:** Victoria Cheng
 
