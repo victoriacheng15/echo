@@ -1,0 +1,23 @@
+# FinOps & GreenOps Rate Card
+# All rates are defined per unit.
+
+# The value of human time (wait-time/thinking-time)
+# Formula: $0.10 per second = $0.0001 per millisecond
+compute_usd_per_ms: 0.0001
+
+# Operational Energy Cost (approximate industrial rate)
+energy_usd_per_joule: 0.00000005
+
+# Environmental Impact (Grid Intensity CO2e)
+# Standard: 400g CO2e per kWh = 0.0004g per joule
+carbon_g_per_joule: 0.0004
+
+# --- Knowledge Refinement ---
+# Minimum hit rate before context is considered "Low Signal"
+target_hit_rate: 0.15
+
+# Points to subtract from importance_score per cycle
+decay_step: 1
+
+# Minimum events required before a refinement cycle
+refine_interval_events: 50
