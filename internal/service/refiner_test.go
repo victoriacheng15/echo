@@ -51,7 +51,7 @@ func TestKnowledgeRefiner(t *testing.T) {
 		// 4. Verify decay in SQLite
 		var importance int
 		sqldb.QueryRow("SELECT importance_score FROM memories WHERE id = ?", initialID).Scan(&importance)
-		
+
 		// Initial was 1 (default from StoreMemory UPSERT if not exists), so 1 - 1 = 0
 		if importance != 0 {
 			t.Errorf("Expected importance score 0, got %d", importance)

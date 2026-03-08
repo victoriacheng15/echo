@@ -12,15 +12,15 @@ import (
 
 // TelemetryEvent represents a single analytical event.
 type TelemetryEvent struct {
-	Timestamp       string   `json:"timestamp"`        // ISO8601
-	Tool            string   `json:"tool"`             // store, recall, search, etc.
-	SourceInterface string   `json:"source_interface"` // mcp, cli, web
-	Agent           string   `json:"agent"`            // Identifying agent (e.g., 'claude-desktop', 'gemini-cli')
-	ContextKey      string   `json:"context_key"`      // e.g., project:echo
-	MemoryIDs       []int64  `json:"memory_ids"`       // Affected record IDs
-	LatencyMs       int64    `json:"latency_ms"`       // Execution duration
-	IsHit           bool     `json:"is_hit"`           // True if results found
-	Joules          float64  `json:"joules"`           // Real or Synthetic
+	Timestamp       string  `json:"timestamp"`        // ISO8601
+	Tool            string  `json:"tool"`             // store, recall, search, etc.
+	SourceInterface string  `json:"source_interface"` // mcp, cli, web
+	Agent           string  `json:"agent"`            // Identifying agent (e.g., 'claude-desktop', 'gemini-cli')
+	ContextKey      string  `json:"context_key"`      // e.g., project:echo
+	MemoryIDs       []int64 `json:"memory_ids"`       // Affected record IDs
+	LatencyMs       int64   `json:"latency_ms"`       // Execution duration
+	IsHit           bool    `json:"is_hit"`           // True if results found
+	Joules          float64 `json:"joules"`           // Real or Synthetic
 }
 
 // TelemetryService handles asynchronous event emission to JSONL.

@@ -68,7 +68,7 @@ func main() {
 	}
 
 	// Create MCP Server
-	s := mcp.NewServer(memorySvc)
+	s := mcp.NewServer(memorySvc, analyticsSvc, rateSvc)
 
 	log.Printf("Echo MCP Server starting (DB: %s)...", *dbPath)
 

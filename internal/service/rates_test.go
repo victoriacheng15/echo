@@ -26,11 +26,11 @@ carbon_g_per_joule: 0.5
 	t.Run("CalculateImpact", func(t *testing.T) {
 		latency := int64(10)
 		joules := 2.0
-		
+
 		// cost = (10 * 0.1) + (2.0 * 0.01) = 1.0 + 0.02 = 1.02
 		// carbon = 2.0 * 0.5 = 1.0
 		cost, carbon := rs.CalculateEconomicImpact(latency, joules)
-		
+
 		if cost != 1.02 {
 			t.Errorf("Expected cost 1.02, got %f", cost)
 		}

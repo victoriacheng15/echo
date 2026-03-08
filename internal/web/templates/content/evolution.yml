@@ -49,3 +49,8 @@ chapters:
         description: |
           - Implemented the DuckDB-optimized Data Bridge to ingest high-fidelity JSONL telemetry, enabling sub-millisecond OLAP querying of system economics.
           - Engineered the autonomous 'Knowledge Refiner' to automatically decay and deactivate low-signal memories based on real-world hit rates.
+      - date: "2026-03-08"
+        title: "Observability: get_analytics Tooling"
+        description: |
+          - Exposed the DuckDB analytical engine via MCP, providing AI agents with real-time 'Self-Awareness' of their resource impact and context utility.
+          - Completed the 'FinOps Feedback Loop' by enabling agents to query their own cost-per-feature and carbon footprint metrics directly.
