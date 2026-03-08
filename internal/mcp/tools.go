@@ -13,7 +13,7 @@ import (
 )
 
 // NewServer creates and configures a new Echo MCP Server.
-func NewServer(memorySvc *service.MemoryService) *server.MCPServer {
+func NewServer(memorySvc *service.MemoryService, analyticsSvc *service.AnalyticsService, rateSvc *service.RateService) *server.MCPServer {
 	// Create MCP Server
 	s := server.NewMCPServer(
 		"Echo",
@@ -29,6 +29,11 @@ func NewServer(memorySvc *service.MemoryService) *server.MCPServer {
 	registerSearchMemoriesTool(s, memorySvc, governanceRules) // Read (FTS)
 	registerUpdateMemoryTool(s, memorySvc)                    // Update (Surgical)
 	registerDeletionTools(s, memorySvc)                       // Delete
+
+	// Register Analytical Tools (Phase 6.5)
+	if analyticsSvc != nil && rateSvc != nil {
+		registerGetAnalyticsTool(s, analyticsSvc, rateSvc)
+	}
 
 	return s
 }
@@ -235,6 +240,37 @@ func registerDeletionTools(s *server.MCPServer, svc *service.MemoryService) {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to delete memory: %v", err)), nil
 		}
 		return mcp.NewToolResultText("Memory deleted successfully."), nil
+	})
+}
+
+// --- Tool Registration: ANALYTICS ---
+// registerGetAnalyticsTool registers the 'get_analytics' tool.
+// Inputs:
+// - context_key (string, optional): Filter by context.
+// - agent (string, optional): Filter by agent.
+func registerGetAnalyticsTool(s *server.MCPServer, svc *service.AnalyticsService, rateSvc *service.RateService) {
+	tool := mcp.NewTool("get_analytics",
+		mcp.WithDescription("Retrieves analytical insights including context ROI, unit economics (FinOps), and environmental impact (GreenOps)."),
+		mcp.WithString("context_key", mcp.Description("Optional filter by context_key (e.g., 'project:echo').")),
+		mcp.WithString("agent", mcp.Description("Optional filter by agent identifier.")),
+	)
+
+	s.AddTool(tool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		// Sync events before querying to ensure up-to-date data
+		if err := svc.SyncEvents(); err != nil {
+			log.Printf("Warning: failed to sync events for analytics: %v", err)
+		}
+
+		contextKey := request.GetString("context_key", "")
+		agent := request.GetString("agent", "")
+
+		impacts, err := svc.GetProjectImpact(rateSvc.Card, contextKey, agent)
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Failed to retrieve analytics: %v", err)), nil
+		}
+
+		data, _ := json.Marshal(impacts)
+		return mcp.NewToolResultText(string(data)), nil
 	})
 }
 

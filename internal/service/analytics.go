@@ -52,7 +52,7 @@ func (as *AnalyticsService) Close() error {
 // This uses DuckDB's native high-performance JSON reader.
 func (as *AnalyticsService) SyncEvents() error {
 	eventLog := filepath.Join(as.dataDir, "events.jsonl")
-	
+
 	// Check if file exists
 	if _, err := os.Stat(eventLog); os.IsNotExist(err) {
 		return nil // Nothing to sync
@@ -114,17 +114,18 @@ func (as *AnalyticsService) initSchema() error {
 
 // ProjectImpact represents the economic and environmental cost of a project's context usage.
 type ProjectImpact struct {
-	ContextKey    string  `json:"context_key"`
-	Agent         string  `json:"agent"`
-	CallCount     int     `json:"call_count"`
-	TotalCostUSD  float64 `json:"total_cost_usd"`
+	ContextKey     string  `json:"context_key"`
+	Agent          string  `json:"agent"`
+	CallCount      int     `json:"call_count"`
+	TotalCostUSD   float64 `json:"total_cost_usd"`
 	TotalCarbonG   float64 `json:"total_carbon_g"`
 	AverageHitRate float64 `json:"average_hit_rate"`
 }
 
 // GetProjectImpact calculates the real-world impact using the provided rate card.
-func (as *AnalyticsService) GetProjectImpact(card RateCard) ([]ProjectImpact, error) {
-	query := `
+// Supports optional filtering by context_key and agent.
+func (as *AnalyticsService) GetProjectImpact(card RateCard, contextKey, agent string) ([]ProjectImpact, error) {
+	baseQuery := `
 	SELECT 
 		context_key,
 		agent,
@@ -132,10 +133,21 @@ func (as *AnalyticsService) GetProjectImpact(card RateCard) ([]ProjectImpact, er
 		(total_latency_ms * ?) + (total_joules * ?) as total_cost_usd,
 		(total_joules * ?) as total_carbon_g,
 		hit_rate
-	FROM project_finops;
+	FROM project_finops
+	WHERE 1=1
 	`
+	args := []interface{}{card.ComputeUSDPerMs, card.EnergyUSDPerJoule, card.CarbonGPerJoule}
 
-	rows, err := as.db.Query(query, card.ComputeUSDPerMs, card.EnergyUSDPerJoule, card.CarbonGPerJoule)
+	if contextKey != "" {
+		baseQuery += " AND context_key = ?"
+		args = append(args, contextKey)
+	}
+	if agent != "" {
+		baseQuery += " AND agent = ?"
+		args = append(args, agent)
+	}
+
+	rows, err := as.db.Query(baseQuery, args...)
 	if err != nil {
 		return nil, err
 	}
@@ -186,4 +198,3 @@ func (as *AnalyticsService) GetLowValueMemoryIDs(targetHitRate float64) ([]int64
 	}
 	return ids, nil
 }
-

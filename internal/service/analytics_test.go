@@ -23,7 +23,7 @@ func TestAnalyticsService(t *testing.T) {
 	// Step 2: Create a sample events.jsonl
 	eventsContent := `{"timestamp":"2026-03-06T10:00:00Z","tool":"recall","source_interface":"mcp","agent":"claude","context_key":"project:echo","memory_ids":[1,2],"latency_ms":15,"is_hit":true,"joules":0.75}
 {"timestamp":"2026-03-06T10:01:00Z","tool":"search","source_interface":"mcp","agent":"claude","context_key":"global","memory_ids":[],"latency_ms":50,"is_hit":false,"joules":2.5}`
-	
+
 	err = os.WriteFile(filepath.Join(tmpDir, "events.jsonl"), []byte(eventsContent), 0644)
 	if err != nil {
 		t.Fatalf("Failed to write sample events: %v", err)

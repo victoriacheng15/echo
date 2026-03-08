@@ -24,8 +24,13 @@ func TestNewServer(t *testing.T) {
 	}
 	defer sqldb.Close()
 
+	dataDir := "test_data_mcp"
+	defer os.RemoveAll(dataDir)
+
+	analyticsSvc, _ := service.NewAnalyticsService(dataDir)
+	rateSvc := &service.RateService{Card: service.RateCard{ComputeUSDPerMs: 0.0001}}
 	svc := service.NewMemoryService(sqldb)
-	s := NewServer(svc)
+	s := NewServer(svc, analyticsSvc, rateSvc)
 
 	t.Run("VerifyToolMetadata", func(t *testing.T) {
 		// Just check for presence of tools
@@ -36,6 +41,7 @@ func TestNewServer(t *testing.T) {
 			"update_memory",
 			"search_for_deletion",
 			"delete_memory",
+			"get_analytics",
 		}
 
 		tools := s.ListTools()
@@ -70,6 +76,21 @@ func TestNewServer(t *testing.T) {
 			}
 
 			res, err := handlers["store_memory"](ctx, req)
+			if err != nil {
+				t.Fatalf("Handler error: %v", err)
+			}
+			if res.IsError {
+				t.Fatalf("Tool returned error: %+v", res.Content[0])
+			}
+		})
+
+		t.Run("get_analytics_handler", func(t *testing.T) {
+			req := mcp.CallToolRequest{}
+			req.Params.Arguments = map[string]any{
+				"context_key": "global",
+			}
+
+			res, err := handlers["get_analytics"](ctx, req)
 			if err != nil {
 				t.Fatalf("Handler error: %v", err)
 			}

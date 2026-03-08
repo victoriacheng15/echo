@@ -32,7 +32,7 @@ func TestTelemetryService(t *testing.T) {
 		}
 
 		ts.Emit(event)
-		
+
 		// Give some time for background processing
 		time.Sleep(100 * time.Millisecond)
 		ts.Close()

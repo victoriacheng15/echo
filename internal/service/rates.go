@@ -10,8 +10,8 @@ import (
 // RateCard defines the pricing and emission factors.
 type RateCard struct {
 	ComputeUSDPerMs      float64 `yaml:"compute_usd_per_ms"`
-	EnergyUSDPerJoule     float64 `yaml:"energy_usd_per_joule"`
-	CarbonGPerJoule       float64 `yaml:"carbon_g_per_joule"`
+	EnergyUSDPerJoule    float64 `yaml:"energy_usd_per_joule"`
+	CarbonGPerJoule      float64 `yaml:"carbon_g_per_joule"`
 	TargetHitRate        float64 `yaml:"target_hit_rate"`
 	DecayStep            int     `yaml:"decay_step"`
 	RefineIntervalEvents int     `yaml:"refine_interval_events"`
