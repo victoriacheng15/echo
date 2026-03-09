@@ -18,7 +18,7 @@ type TelemetryEvent struct {
 	Agent           string  `json:"agent"`            // Identifying agent (e.g., 'claude-desktop', 'gemini-cli')
 	ContextKey      string  `json:"context_key"`      // e.g., project:echo
 	MemoryIDs       []int64 `json:"memory_ids"`       // Affected record IDs
-	LatencyMs       int64   `json:"latency_ms"`       // Execution duration
+	LatencyMs       float64 `json:"latency_ms"`       // Execution duration
 	IsHit           bool    `json:"is_hit"`           // True if results found
 	Joules          float64 `json:"joules"`           // Real or Synthetic
 }
@@ -61,9 +61,9 @@ func (ts *TelemetryService) Emit(event TelemetryEvent) {
 }
 
 // CalculateJoules returns synthetic energy consumption based on latency.
-func (ts *TelemetryService) CalculateJoules(latencyMs int64) float64 {
+func (ts *TelemetryService) CalculateJoules(latencyMs float64) float64 {
 	// Future: Check for Kepler /proc or metrics here.
-	return float64(latencyMs) * ts.tdpFactor
+	return latencyMs * ts.tdpFactor
 }
 
 // Close flushes remaining events and stops the background processor.

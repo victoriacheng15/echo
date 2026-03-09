@@ -91,7 +91,7 @@ func (as *AnalyticsService) initSchema() error {
 		agent VARCHAR,
 		context_key VARCHAR,
 		memory_ids BIGINT[],
-		latency_ms BIGINT,
+		latency_ms DOUBLE,
 		is_hit BOOLEAN,
 		joules DOUBLE
 	);

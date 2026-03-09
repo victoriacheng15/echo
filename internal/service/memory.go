@@ -109,7 +109,7 @@ func (s *MemoryService) StoreMemoryWithTags(content, contextKey, entryType strin
 
 	// Emit telemetry
 	if s.Telemetry != nil {
-		latency := time.Since(start).Milliseconds()
+		latency := float64(time.Since(start).Nanoseconds()) / 1e6
 		s.Telemetry.Emit(TelemetryEvent{
 			Tool:            "store",
 			SourceInterface: s.Source,
@@ -162,7 +162,7 @@ func (s *MemoryService) RecallMemory(contextKeys []string, limit int) ([]Memory,
 
 	// Emit telemetry
 	if s.Telemetry != nil {
-		latency := time.Since(start).Milliseconds()
+		latency := float64(time.Since(start).Nanoseconds()) / 1e6
 		var ids []int64
 		for _, m := range memories {
 			ids = append(ids, int64(m.ID))
@@ -222,7 +222,7 @@ func (s *MemoryService) SearchMemories(query string) ([]Memory, error) {
 
 	// Emit telemetry
 	if s.Telemetry != nil {
-		latency := time.Since(start).Milliseconds()
+		latency := float64(time.Since(start).Nanoseconds()) / 1e6
 		var ids []int64
 		for _, m := range memories {
 			ids = append(ids, int64(m.ID))
