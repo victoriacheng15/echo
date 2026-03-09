@@ -26,9 +26,9 @@ func TestTelemetryService(t *testing.T) {
 			Tool:            "test_tool",
 			SourceInterface: "test_cli",
 			ContextKey:      "test:context",
-			LatencyMs:       123,
+			LatencyMs:       123.45,
 			IsHit:           true,
-			Joules:          6.15,
+			Joules:          6.1725,
 		}
 
 		ts.Emit(event)
@@ -58,14 +58,14 @@ func TestTelemetryService(t *testing.T) {
 			t.Errorf("Expected tool %s, got %s", event.Tool, decoded.Tool)
 		}
 		if decoded.LatencyMs != event.LatencyMs {
-			t.Errorf("Expected latency %d, got %d", event.LatencyMs, decoded.LatencyMs)
+			t.Errorf("Expected latency %f, got %f", event.LatencyMs, decoded.LatencyMs)
 		}
 	})
 }
 
 func TestCalculateJoules(t *testing.T) {
 	ts := &TelemetryService{tdpFactor: 0.1}
-	joules := ts.CalculateJoules(100)
+	joules := ts.CalculateJoules(100.0)
 	expected := 10.0
 	if joules != expected {
 		t.Errorf("Expected %f joules, got %f", expected, joules)
