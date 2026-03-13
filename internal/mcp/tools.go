@@ -247,12 +247,10 @@ func registerDeletionTools(s *server.MCPServer, svc *service.MemoryService) {
 // registerGetAnalyticsTool registers the 'get_analytics' tool.
 // Inputs:
 // - context_key (string, optional): Filter by context.
-// - agent (string, optional): Filter by agent.
 func registerGetAnalyticsTool(s *server.MCPServer, svc *service.AnalyticsService, rateSvc *service.RateService) {
 	tool := mcp.NewTool("get_analytics",
 		mcp.WithDescription("Retrieves analytical insights including context ROI, unit economics (FinOps), and environmental impact (GreenOps)."),
 		mcp.WithString("context_key", mcp.Description("Optional filter by context_key (e.g., 'project:echo').")),
-		mcp.WithString("agent", mcp.Description("Optional filter by agent identifier.")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -262,9 +260,8 @@ func registerGetAnalyticsTool(s *server.MCPServer, svc *service.AnalyticsService
 		}
 
 		contextKey := request.GetString("context_key", "")
-		agent := request.GetString("agent", "")
 
-		impacts, err := svc.GetProjectImpact(rateSvc.Card, contextKey, agent)
+		impacts, err := svc.GetProjectImpact(rateSvc.Card, contextKey)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to retrieve analytics: %v", err)), nil
 		}

@@ -21,13 +21,13 @@ func TestAnalyticsService_TableDriven(t *testing.T) {
 	}{
 		{
 			name:          "CountProjectCalls",
-			eventsContent: `{"timestamp":"2026-03-06T10:00:00Z","tool":"recall","source_interface":"mcp","agent":"claude","context_key":"project:echo","memory_ids":[1,2],"latency_ms":15,"is_hit":true,"joules":0.75}`,
-			query:         "SELECT call_count FROM project_finops WHERE context_key = 'project:echo' AND agent = 'claude'",
+			eventsContent: `{"timestamp":"2026-03-06T10:00:00Z","tool":"recall","source_interface":"mcp","context_key":"project:echo","memory_ids":[1,2],"latency_ms":15,"is_hit":true,"joules":0.75}`,
+			query:         "SELECT call_count FROM project_finops WHERE context_key = 'project:echo'",
 			wantValue:     1,
 		},
 		{
 			name:          "SumGlobalJoules",
-			eventsContent: `{"timestamp":"2026-03-06T10:01:00Z","tool":"search","source_interface":"mcp","agent":"claude","context_key":"global","memory_ids":[],"latency_ms":50,"is_hit":false,"joules":2.5}`,
+			eventsContent: `{"timestamp":"2026-03-06T10:01:00Z","tool":"search","source_interface":"mcp","context_key":"global","memory_ids":[],"latency_ms":50,"is_hit":false,"joules":2.5}`,
 			query:         "SELECT total_joules FROM project_finops WHERE context_key = 'global'",
 			wantValue:     2.5,
 		},
@@ -81,7 +81,7 @@ func TestGetProjectImpact_TableDriven(t *testing.T) {
 	as, _ := NewAnalyticsService(tmpDir)
 	defer as.Close()
 
-	eventsContent := `{"timestamp":"2026-03-06T10:00:00Z","tool":"recall","source_interface":"mcp","agent":"claude","context_key":"project:echo","memory_ids":[1,2],"latency_ms":100,"is_hit":true,"joules":1.0}`
+	eventsContent := `{"timestamp":"2026-03-06T10:00:00Z","tool":"recall","source_interface":"mcp","context_key":"project:echo","memory_ids":[1,2],"latency_ms":100,"is_hit":true,"joules":1.0}`
 	os.WriteFile(filepath.Join(tmpDir, "events.jsonl"), []byte(eventsContent), 0644)
 	as.SyncEvents()
 
@@ -94,21 +94,18 @@ func TestGetProjectImpact_TableDriven(t *testing.T) {
 	tests := []struct {
 		name       string
 		contextKey string
-		agent      string
 		wantCost   float64
 		wantCarbon float64
 	}{
 		{
 			name:       "ProjectImpact",
 			contextKey: "project:echo",
-			agent:      "claude",
 			wantCost:   0.15, // 0.1 + 0.05
 			wantCarbon: 0.5,
 		},
 		{
 			name:       "NoMatchContext",
 			contextKey: "project:none",
-			agent:      "claude",
 			wantCost:   0,
 			wantCarbon: 0,
 		},
@@ -116,7 +113,7 @@ func TestGetProjectImpact_TableDriven(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			impacts, err := as.GetProjectImpact(card, tt.contextKey, tt.agent)
+			impacts, err := as.GetProjectImpact(card, tt.contextKey)
 			if err != nil {
 				t.Fatalf("GetProjectImpact failed: %v", err)
 			}
