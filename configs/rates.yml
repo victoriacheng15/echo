@@ -1,16 +1,17 @@
-# FinOps & GreenOps Rate Card
+# FinOps & GreenOps Rate Card (Canada-based)
 # All rates are defined per unit.
 
 # The value of human time (wait-time/thinking-time)
-# Formula: $0.10 per second = $0.0001 per millisecond
-compute_usd_per_ms: 0.0001
+# Formula: $0.10 CAD per second = $0.0001 per millisecond
+compute_cad_per_ms: 0.0001
 
-# Operational Energy Cost (approximate industrial rate)
-energy_usd_per_joule: 0.00000005
+# Operational Energy Cost (Canada Commercial/Industrial Average)
+# Approx: $0.15 CAD per kWh = 0.000000042 CAD per joule
+energy_cad_per_joule: 0.000000042
 
-# Environmental Impact (Grid Intensity CO2e)
-# Standard: 400g CO2e per kWh = 0.0004g per joule
-carbon_g_per_joule: 0.0004
+# Environmental Impact (Canada National Grid Intensity)
+# Standard: 150g CO2e per kWh = 0.000042g per joule
+carbon_g_per_joule: 0.000042
 
 # --- Knowledge Refinement ---
 # Minimum hit rate before context is considered "Low Signal"
