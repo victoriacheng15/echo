@@ -28,12 +28,11 @@ func TestNewServer(t *testing.T) {
 	defer os.RemoveAll(dataDir)
 
 	analyticsSvc, _ := service.NewAnalyticsService(dataDir)
-	rateSvc := &service.RateService{Card: service.RateCard{ComputeUSDPerMs: 0.0001}}
+	rateSvc := &service.RateService{Card: service.RateCard{ComputeCADPerMs: 0.0001}}
 	svc := service.NewMemoryService(sqldb)
 	s := NewServer(svc, analyticsSvc, rateSvc)
 
 	t.Run("VerifyToolMetadata", func(t *testing.T) {
-		// Just check for presence of tools
 		toolNames := []string{
 			"store_memory",
 			"recall_memory",
@@ -59,7 +58,7 @@ func TestNewServer(t *testing.T) {
 		}
 	})
 
-	t.Run("TestToolHandlers", func(t *testing.T) {
+	t.Run("TestToolHandlers_TableDriven", func(t *testing.T) {
 		ctx := context.Background()
 		tools := s.ListTools()
 		handlers := make(map[string]func(context.Context, mcp.CallToolRequest) (*mcp.CallToolResult, error))
@@ -67,37 +66,54 @@ func TestNewServer(t *testing.T) {
 			handlers[tool.Tool.Name] = tool.Handler
 		}
 
-		t.Run("store_memory_handler", func(t *testing.T) {
-			req := mcp.CallToolRequest{}
-			req.Params.Arguments = map[string]any{
-				"content":     "test content",
-				"context_key": "global",
-				"entry_type":  "directive",
-			}
+		tests := []struct {
+			name      string
+			tool      string
+			arguments map[string]any
+			wantErr   bool
+		}{
+			{
+				name: "store_memory_success",
+				tool: "store_memory",
+				arguments: map[string]any{
+					"content":     "test content",
+					"context_key": "global",
+					"entry_type":  "directive",
+				},
+				wantErr: false,
+			},
+			{
+				name: "get_analytics_success",
+				tool: "get_analytics",
+				arguments: map[string]any{
+					"context_key": "global",
+				},
+				wantErr: false,
+			},
+			{
+				name: "recall_memory_success",
+				tool: "recall_memory",
+				arguments: map[string]any{
+					"context_keys": []any{"global"},
+				},
+				wantErr: false,
+			},
+		}
 
-			res, err := handlers["store_memory"](ctx, req)
-			if err != nil {
-				t.Fatalf("Handler error: %v", err)
-			}
-			if res.IsError {
-				t.Fatalf("Tool returned error: %+v", res.Content[0])
-			}
-		})
+		for _, tt := range tests {
+			t.Run(tt.name, func(t *testing.T) {
+				req := mcp.CallToolRequest{}
+				req.Params.Arguments = tt.arguments
 
-		t.Run("get_analytics_handler", func(t *testing.T) {
-			req := mcp.CallToolRequest{}
-			req.Params.Arguments = map[string]any{
-				"context_key": "global",
-			}
-
-			res, err := handlers["get_analytics"](ctx, req)
-			if err != nil {
-				t.Fatalf("Handler error: %v", err)
-			}
-			if res.IsError {
-				t.Fatalf("Tool returned error: %+v", res.Content[0])
-			}
-		})
+				res, err := handlers[tt.tool](ctx, req)
+				if err != nil {
+					t.Fatalf("Handler returned actual error: %v", err)
+				}
+				if res.IsError != tt.wantErr {
+					t.Errorf("got IsError %v, want %v. Error content: %+v", res.IsError, tt.wantErr, res.Content)
+				}
+			})
+		}
 	})
 }
 

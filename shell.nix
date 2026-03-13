@@ -2,7 +2,6 @@
 
 pkgs.mkShell {
   nativeBuildInputs = with pkgs; [
-    go
     (sqlite.override {
       interactive = true;
     })

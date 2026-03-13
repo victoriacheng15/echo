@@ -104,6 +104,8 @@ func (as *AnalyticsService) initSchema() error {
 		COUNT(*) as call_count,
 		SUM(latency_ms) as total_latency_ms,
 		SUM(joules) as total_joules,
+		0.0 as total_cost_cad,
+		0.0 as total_carbon_g,
 		CAST(SUM(CASE WHEN is_hit THEN 1 ELSE 0 END) AS DOUBLE) / COUNT(*) as hit_rate
 	FROM events
 	GROUP BY context_key, agent;
@@ -117,7 +119,7 @@ type ProjectImpact struct {
 	ContextKey     string  `json:"context_key"`
 	Agent          string  `json:"agent"`
 	CallCount      int     `json:"call_count"`
-	TotalCostUSD   float64 `json:"total_cost_usd"`
+	TotalCostCAD   float64 `json:"total_cost_cad"`
 	TotalCarbonG   float64 `json:"total_carbon_g"`
 	AverageHitRate float64 `json:"average_hit_rate"`
 }
@@ -130,13 +132,13 @@ func (as *AnalyticsService) GetProjectImpact(card RateCard, contextKey, agent st
 		context_key,
 		agent,
 		call_count,
-		(total_latency_ms * ?) + (total_joules * ?) as total_cost_usd,
+		(total_latency_ms * ?) + (total_joules * ?) as total_cost_cad,
 		(total_joules * ?) as total_carbon_g,
 		hit_rate
 	FROM project_finops
 	WHERE 1=1
 	`
-	args := []interface{}{card.ComputeUSDPerMs, card.EnergyUSDPerJoule, card.CarbonGPerJoule}
+	args := []interface{}{card.ComputeCADPerMs, card.EnergyCADPerJoule, card.CarbonGPerJoule}
 
 	if contextKey != "" {
 		baseQuery += " AND context_key = ?"
@@ -156,7 +158,7 @@ func (as *AnalyticsService) GetProjectImpact(card RateCard, contextKey, agent st
 	var impacts []ProjectImpact
 	for rows.Next() {
 		var pi ProjectImpact
-		if err := rows.Scan(&pi.ContextKey, &pi.Agent, &pi.CallCount, &pi.TotalCostUSD, &pi.TotalCarbonG, &pi.AverageHitRate); err != nil {
+		if err := rows.Scan(&pi.ContextKey, &pi.Agent, &pi.CallCount, &pi.TotalCostCAD, &pi.TotalCarbonG, &pi.AverageHitRate); err != nil {
 			return nil, err
 		}
 		impacts = append(impacts, pi)

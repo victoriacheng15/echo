@@ -9,8 +9,8 @@ import (
 
 // RateCard defines the pricing and emission factors.
 type RateCard struct {
-	ComputeUSDPerMs      float64 `yaml:"compute_usd_per_ms"`
-	EnergyUSDPerJoule    float64 `yaml:"energy_usd_per_joule"`
+	ComputeCADPerMs      float64 `yaml:"compute_cad_per_ms"`
+	EnergyCADPerJoule    float64 `yaml:"energy_cad_per_joule"`
 	CarbonGPerJoule      float64 `yaml:"carbon_g_per_joule"`
 	TargetHitRate        float64 `yaml:"target_hit_rate"`
 	DecayStep            int     `yaml:"decay_step"`
@@ -39,7 +39,7 @@ func NewRateService(configPath string) (*RateService, error) {
 
 // CalculateEconomicImpact returns the cost and carbon for a given event.
 func (rs *RateService) CalculateEconomicImpact(latencyMs int64, joules float64) (float64, float64) {
-	cost := (float64(latencyMs) * rs.Card.ComputeUSDPerMs) + (joules * rs.Card.EnergyUSDPerJoule)
+	cost := (float64(latencyMs) * rs.Card.ComputeCADPerMs) + (joules * rs.Card.EnergyCADPerJoule)
 	carbon := joules * rs.Card.CarbonGPerJoule
 	return cost, carbon
 }
