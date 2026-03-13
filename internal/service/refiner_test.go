@@ -33,7 +33,7 @@ func TestKnowledgeRefiner_TableDriven(t *testing.T) {
 				ContextKey: "test:low",
 				EntryType:  "fact",
 			},
-			eventsJSONL:    `{"timestamp":"2026-03-06T12:00:00Z","tool":"recall","source_interface":"mcp","agent":"claude","context_key":"test:low","memory_ids":[%d],"latency_ms":10,"is_hit":false,"joules":0.5}`,
+			eventsJSONL:    `{"timestamp":"2026-03-06T12:00:00Z","tool":"recall","source_interface":"mcp","context_key":"test:low","memory_ids":[%d],"latency_ms":10,"is_hit":false,"joules":0.5}`,
 			targetHitRate:  0.5,
 			decayStep:      1,
 			wantImportance: 0,
@@ -46,7 +46,7 @@ func TestKnowledgeRefiner_TableDriven(t *testing.T) {
 				ContextKey: "test:high",
 				EntryType:  "fact",
 			},
-			eventsJSONL:    `{"timestamp":"2026-03-06T12:05:00Z","tool":"recall","source_interface":"mcp","agent":"claude","context_key":"test:high","memory_ids":[%d],"latency_ms":10,"is_hit":true,"joules":0.5}`,
+			eventsJSONL:    `{"timestamp":"2026-03-06T12:05:00Z","tool":"recall","source_interface":"mcp","context_key":"test:high","memory_ids":[%d],"latency_ms":10,"is_hit":true,"joules":0.5}`,
 			targetHitRate:  0.1,
 			decayStep:      1,
 			wantImportance: 1,
@@ -59,7 +59,7 @@ func TestKnowledgeRefiner_TableDriven(t *testing.T) {
 				ContextKey: "test:fading",
 				EntryType:  "fact",
 			},
-			eventsJSONL:    `{"timestamp":"2026-03-06T12:10:00Z","tool":"recall","source_interface":"mcp","agent":"claude","context_key":"test:fading","memory_ids":[%d],"latency_ms":10,"is_hit":false,"joules":0.5}`,
+			eventsJSONL:    `{"timestamp":"2026-03-06T12:10:00Z","tool":"recall","source_interface":"mcp","context_key":"test:fading","memory_ids":[%d],"latency_ms":10,"is_hit":false,"joules":0.5}`,
 			targetHitRate:  0.9,
 			decayStep:      1,
 			wantImportance: 1, // 2 - 1 = 1
@@ -72,7 +72,10 @@ func TestKnowledgeRefiner_TableDriven(t *testing.T) {
 			// Setup for each sub-test
 			subTmpDir, _ := os.MkdirTemp(tmpDir, tt.name)
 			sqlitePath := filepath.Join(subTmpDir, "test.db")
-			sqldb, _ := db.InitDB(sqlitePath)
+			sqldb, err := db.InitDB(sqlitePath)
+			if err != nil {
+				t.Fatalf("Failed to initialize database: %v", err)
+			}
 			defer sqldb.Close()
 
 			memorySvc := NewMemoryService(sqldb)
@@ -111,7 +114,7 @@ func TestKnowledgeRefiner_TableDriven(t *testing.T) {
 			// 4. Verify
 			var importance int
 			var isActive bool
-			err := sqldb.QueryRow("SELECT importance_score, is_active FROM memories WHERE id = ?", memoryID).Scan(&importance, &isActive)
+			err = sqldb.QueryRow("SELECT importance_score, is_active FROM memories WHERE id = ?", memoryID).Scan(&importance, &isActive)
 			if err != nil {
 				t.Fatalf("Failed to query memory: %v", err)
 			}
@@ -127,15 +130,24 @@ func TestKnowledgeRefiner_TableDriven(t *testing.T) {
 }
 
 func TestRefine_NoEvents(t *testing.T) {
-	tmpDir, _ := os.MkdirTemp("", "refiner_no_events")
+	tmpDir, err := os.MkdirTemp("", "refiner_no_events")
+	if err != nil {
+		t.Fatalf("Failed to create temp dir: %v", err)
+	}
 	defer os.RemoveAll(tmpDir)
 
 	sqlitePath := filepath.Join(tmpDir, "test.db")
-	sqldb, _ := db.InitDB(sqlitePath)
+	sqldb, err := db.InitDB(sqlitePath)
+	if err != nil {
+		t.Fatalf("Failed to initialize database: %v", err)
+	}
 	defer sqldb.Close()
 
 	memorySvc := NewMemoryService(sqldb)
-	analyticsSvc, _ := NewAnalyticsService(tmpDir)
+	analyticsSvc, err := NewAnalyticsService(tmpDir)
+	if err != nil {
+		t.Fatalf("Failed to initialize analytics service: %v", err)
+	}
 	defer analyticsSvc.Close()
 
 	rates := &RateService{Card: RateCard{TargetHitRate: 0.5, DecayStep: 1}}

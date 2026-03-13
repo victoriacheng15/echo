@@ -15,7 +15,6 @@ type TelemetryEvent struct {
 	Timestamp       string  `json:"timestamp"`        // ISO8601
 	Tool            string  `json:"tool"`             // store, recall, search, etc.
 	SourceInterface string  `json:"source_interface"` // mcp, cli, web
-	Agent           string  `json:"agent"`            // Identifying agent (e.g., 'claude-desktop', 'gemini-cli')
 	ContextKey      string  `json:"context_key"`      // e.g., project:echo
 	MemoryIDs       []int64 `json:"memory_ids"`       // Affected record IDs
 	LatencyMs       float64 `json:"latency_ms"`       // Execution duration

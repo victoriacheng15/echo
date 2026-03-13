@@ -88,7 +88,6 @@ func (as *AnalyticsService) initSchema() error {
 		timestamp TIMESTAMP,
 		tool VARCHAR,
 		source_interface VARCHAR,
-		agent VARCHAR,
 		context_key VARCHAR,
 		memory_ids BIGINT[],
 		latency_ms DOUBLE,
@@ -100,7 +99,6 @@ func (as *AnalyticsService) initSchema() error {
 	CREATE OR REPLACE VIEW project_finops AS
 	SELECT 
 		context_key,
-		agent,
 		COUNT(*) as call_count,
 		SUM(latency_ms) as total_latency_ms,
 		SUM(joules) as total_joules,
@@ -108,7 +106,7 @@ func (as *AnalyticsService) initSchema() error {
 		0.0 as total_carbon_g,
 		CAST(SUM(CASE WHEN is_hit THEN 1 ELSE 0 END) AS DOUBLE) / COUNT(*) as hit_rate
 	FROM events
-	GROUP BY context_key, agent;
+	GROUP BY context_key;
 	`
 	_, err := as.db.Exec(query)
 	return err
@@ -117,7 +115,6 @@ func (as *AnalyticsService) initSchema() error {
 // ProjectImpact represents the economic and environmental cost of a project's context usage.
 type ProjectImpact struct {
 	ContextKey     string  `json:"context_key"`
-	Agent          string  `json:"agent"`
 	CallCount      int     `json:"call_count"`
 	TotalCostCAD   float64 `json:"total_cost_cad"`
 	TotalCarbonG   float64 `json:"total_carbon_g"`
@@ -125,12 +122,11 @@ type ProjectImpact struct {
 }
 
 // GetProjectImpact calculates the real-world impact using the provided rate card.
-// Supports optional filtering by context_key and agent.
-func (as *AnalyticsService) GetProjectImpact(card RateCard, contextKey, agent string) ([]ProjectImpact, error) {
+// Supports optional filtering by context_key.
+func (as *AnalyticsService) GetProjectImpact(card RateCard, contextKey string) ([]ProjectImpact, error) {
 	baseQuery := `
 	SELECT 
 		context_key,
-		agent,
 		call_count,
 		(total_latency_ms * ?) + (total_joules * ?) as total_cost_cad,
 		(total_joules * ?) as total_carbon_g,
@@ -144,10 +140,6 @@ func (as *AnalyticsService) GetProjectImpact(card RateCard, contextKey, agent st
 		baseQuery += " AND context_key = ?"
 		args = append(args, contextKey)
 	}
-	if agent != "" {
-		baseQuery += " AND agent = ?"
-		args = append(args, agent)
-	}
 
 	rows, err := as.db.Query(baseQuery, args...)
 	if err != nil {
@@ -158,7 +150,7 @@ func (as *AnalyticsService) GetProjectImpact(card RateCard, contextKey, agent st
 	var impacts []ProjectImpact
 	for rows.Next() {
 		var pi ProjectImpact
-		if err := rows.Scan(&pi.ContextKey, &pi.Agent, &pi.CallCount, &pi.TotalCostCAD, &pi.TotalCarbonG, &pi.AverageHitRate); err != nil {
+		if err := rows.Scan(&pi.ContextKey, &pi.CallCount, &pi.TotalCostCAD, &pi.TotalCarbonG, &pi.AverageHitRate); err != nil {
 			return nil, err
 		}
 		impacts = append(impacts, pi)
