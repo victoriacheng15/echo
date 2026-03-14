@@ -38,27 +38,20 @@ The Echo MCP Server is designed with a strict separation of concerns, ensuring t
 
 Echo is designed with performance in mind (P99 < 10ms) to ensure it does not bottleneck AI reasoning loops.
 
-The following benchmarks were recorded on a baseline system:
+The following benchmarks were recorded on the current production environment:
 
-- **CPU:** Intel i7-4700HQ CPU @ 2.40GHz
-- **Storage:** SATA SSD
+- **CPU:** AMD Ryzen 7 7840HS (8C/16T) @ 3.8GHz
+- **Storage:** NVMe SSD
 
-### Before (Baseline)
+### Current Performance (1,000+ Records)
 
-| Operation | Complexity | Latency (ms) | Note |
-| :--- | :--- | :--- | :--- |
-| **Recall** | $O(\log n)$ | ~0.14 ms | Indexed via `idx_context_relevance` |
-| **Search** | $O(n)$ | ~9.20 ms | Standard `LIKE` full-table scan |
-| **Store** | $O(1)$ | ~0.85 ms | SQLite WAL UPSERT |
-
-### After (Optimized)
-
-By implementing an FTS5 inverted index, search latency was reduced by **230x**, bringing all read operations into the sub-millisecond range.
+By leveraging an FTS5 inverted index and optimized composite indexing, Echo achieves sub-millisecond latency for all read operations.
 
 | Operation | Complexity | Latency (ms) | Note |
 | :--- | :--- | :--- | :--- |
-| **Recall** | $O(\log n)$ | ~0.14 ms | Indexed via `idx_context_relevance` |
-| **Search** | $O(\log n)$ | ~0.04 ms | FTS5 Inverted Index |
-| **Store** | $O(1)$ | ~0.85 ms | SQLite WAL UPSERT |
+| **Recall** | $O(\log n)$ | **0.12 ms** | Indexed via `idx_context_relevance` |
+| **Search** | $O(\log n)$ | **0.63 ms** | FTS5 Inverted Index |
+| **Store** | $O(1)$ | **0.16 ms** | SQLite WAL UPSERT |
+| **Delete** | $O(1)$ | **0.12 ms** | Record removal & FTS5 sync |
 
 These metrics are formally verified via the Go benchmarking suite (`make bench`).

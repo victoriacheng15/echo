@@ -4,32 +4,101 @@
 
 Unlike standard LLM sessions that reset context every time the process exits, Echo creates a long-term memory (LTM) layer. This ensures that established project preferences and instructions are automatically inherited by the AI in all future sessions, across any directory on your machine.
 
-## 🚀 Key Features
+🌐 [Project Portal](https://victoriacheng15.github.io/echo/)
 
-- **Contextual Recall**: Automatically provides relevant memories based on your current project (`project:name`) or global preferences (`global`).
-- **Persistent Logic**: Uses SQLite with **WAL (Write-Ahead Logging)** mode for high-concurrency and reliability during simultaneous tool calls.
-- **XDG Compliant**: Automatically stores your "brain" in `~/.local/share/echo/echo.db` ensuring memories survive project deletions or binary updates.
-- **Reproducible Environment**: Fully integrated with **Makefile** and **Nix** for consistent builds and CGO-linked SQLite execution.
-- **High Integrity**: Enforces strict data contracts, including 8KB content limits, metadata JSON validation, and enumerated entry types.
+📚 [Documentation Hub: Architecture, ADRs & Operations](./docs/README.md)
 
-## 📚 Documentation
+---
 
-For a deep dive into the system's design, constraints, and historical engineering trade-offs, please refer to the [Documentation](docs/README.md).
+## 📚 Project Evolution
 
-## 🏗️ Tech Stack
+This platform evolved through intentional phases. See the full journey with ADRs:
+
+[View Complete Evolution Log](docs/README.md)
+
+### Key Milestones
+
+- **Ch 1: Persistence** – SQLite with WAL mode for high-concurrency tool calls.
+- **Ch 2: Performance** – FTS5 Inverted Index for $O(\log n)$ keyword search (230x faster).
+- **Ch 3: Workflow** – Custom Go-based static generator for living architectural documentation.
+- **Ch 4: Analytics** – DuckDB integration for knowledge ROI and autonomous memory refinement.
+
+Each milestone links to Architecture Decision Records (ADRs) showing the *why* behind each change.
+
+---
+
+## 🛠️ Tech Stack & Architecture
+
+The platform leverages a robust set of modern technologies for its core functions:
 
 ![Go](https://img.shields.io/badge/go-%2300ADD8.svg?style=for-the-badge&logo=go&logoColor=white)
 ![SQLite](https://img.shields.io/badge/sqlite-%2307405e.svg?style=for-the-badge&logo=sqlite&logoColor=white)
+![DuckDB](https://img.shields.io/badge/duckdb-%23FFF000.svg?style=for-the-badge&logo=duckdb&logoColor=black)
 ![Nix](https://img.shields.io/badge/NIX-5277C3.svg?style=for-the-badge&logo=NixOS&logoColor=white)
 
-## 🛠️ Quick Start
+### System Architecture Overview
 
-### 1. Build & Install
+The diagram below illustrates the high-level flow of memory data from AI agent requests to persistent storage and optimized retrieval.
 
-Echo requires Go 1.25+ and CGO (for SQLite). The provided Makefile automatically detects and uses Nix if available, ensuring a guaranteed build environment.
+```mermaid
+graph TD
+    A[AI Agent / IDE] -- JSON-RPC 2.0 --> B[MCP Transport Layer]
+    B -- Strong Types --> C[Memory Service]
+    C -- Validation --> D{Storage Engine}
+    D -- WAL Persistence --> E[(SQLite)]
+    D -- Full-Text Search --> F[(FTS5 Index)]
+    D -- Telemetry --> G[(DuckDB Analytics)]
+```
+
+---
+
+## 🚀 Key Achievements & Capabilities
+
+### 🧠 Persistent Software Architecture
+
+- **Contextual Recall:** Automatically partitions memories into `project:<name>` and `global` scopes for precision retrieval based on the active workspace.
+- **XDG Compliance:** Strictly adheres to Linux standards by storing the "brain" in `~/.local/share/echo/`, ensuring LTM survives binary updates.
+- **Architectural Isolation:** Implemented "Thin Main" patterns to decouple MCP transport logic from the core business services.
+
+### ⚡ Operational Performance
+
+- **Sub-Millisecond Search:** Utilizes FTS5 virtual tables to ensure the AI's reasoning loop is never throttled by I/O during heavy context retrieval.
+- **Atomic Integrity:** Guarantees data consistency via SQLite transactions and Write-Ahead Logging (WAL), even during catastrophic process exits.
+- **Zero-Config Analytics:** Leverages DuckDB to generate usage insights without requiring external database infrastructure or complex setup.
+
+### 🛡️ Engineering Standards
+
+- **Contract Enforcement:** Validates memory payloads against strict JSON schemas and 8KB content limits to prevent context bloat.
+- **Reproducible Runtimes:** Leverages **Nix** flakes to ensure the CGO-linked SQLite environment is identical across all developer machines.
+- **Decision Framework:** Adopted Architectural Decision Records (ADRs) to document system evolution and manage technical design debt.
+
+---
+
+## 🚀 Getting Started
+
+<details>
+<summary><b>Operational Guide</b></summary>
+
+This guide will help you set up, configure, and verify the Echo MCP server.
+
+### Prerequisites
+
+Ensure you have the following installed on your system:
+
+- [Go](https://go.dev/doc/install) (1.25+)
+- [Nix](https://nixos.org/download.html) (optional, for reproducible toolchains)
+- `make` (GNU Make)
+- `sqlite3` CLI (for manual audits)
+
+### 1. Build and Install
+
+Echo requires CGO for SQLite support. Use the provided Makefile for a guaranteed build:
 
 ```bash
-# Build the binary
+# Build the binary (using Nix recommended)
+nix develop -c make build
+
+# Manual build
 make build
 
 # Install to ~/.local/bin/echo
@@ -38,7 +107,7 @@ make install
 
 ### 2. Configuration
 
-Add Echo to your Gemini CLI configuration (usually located at `~/.gemini/settings.json`):
+Add Echo to your Gemini CLI configuration (usually `~/.gemini/settings.json`):
 
 ```json
 {
@@ -51,55 +120,33 @@ Add Echo to your Gemini CLI configuration (usually located at `~/.gemini/setting
 }
 ```
 
-## 🧠 MCP Tools Interface
+### 3. Verification & Observability
 
-Echo provides five core tools to your AI agent:
+Once installed, you can verify performance and audit the "brain" directly:
 
-1. **`store_memory`**: Saves a new memory or reinforces an existing one. Performs an `UPSERT` to increment the importance score if the content already exists.
-2. **`recall_memory`**: Retrieves the most relevant memories for the current environment based on usage count and recency.
-3. **`search_memories`**: Full-text search across the entire persistent "brain."
-4. **`update_memory`**: Surgically updates the content of an existing memory by its ID, preserving its historical metadata.
-5. **`delete_memory`**: Manually prunes a specific memory from the database.
-
-## ⚡ Performance
-
-Echo is engineered for extreme efficiency. Below are the benchmark results achieved on a **decade-old laptop** (Intel i7-4700HQ, circa 2013), demonstrating the impact of the FTS5 optimization on 1,000+ records:
-
-| Operation | Baseline (LIKE) | **Optimized (FTS5)** | Improvement |
-| :--- | :--- | :--- | :--- |
-| **RecallMemory** | 0.14 ms | **0.14 ms** | - |
-| **SearchMemories** | 9.20 ms | **0.04 ms** | **230x Faster** |
-| **StoreMemory** | 0.85 ms | **0.85 ms** | - |
-
-To reproduce these results on your own hardware:
+- **Performance Audit**
 
 ```bash
 make bench
 ```
 
-## 🧪 Testing & Quality
-
-Echo maintains high operational standards with exhaustive error-path testing and **>80% statement coverage**:
-
-```bash
-# Run all tests (automatically uses Nix if available)
-make test
-
-# Run tests with coverage report
-make test-cov
-```
-
-## 🔍 Observability (CLI "God Mode")
-
-Since Echo uses standard SQLite, you can audit your AI's memories directly from your terminal using the `sqlite3` CLI.
-
-If you don't have it installed:
-
-- **Ubuntu/Debian**: `sudo apt install sqlite3`
-- **macOS**: `brew install sqlite`
-- **Nix**: `nix-shell -p sqlite`
+- **Direct Database Access**
 
 ```bash
 # View the last 5 things the AI learned
 sqlite3 ~/.local/share/echo/echo.db "SELECT * FROM memories ORDER BY last_used DESC LIMIT 5;"
 ```
+
+### 4. Testing
+
+Maintain high operational standards by running the full test suite:
+
+```bash
+# Run all tests
+make test
+
+# Generate coverage report
+make test-cov
+```
+
+</details>

@@ -80,3 +80,60 @@ func BenchmarkSearchMemories(b *testing.B) {
 		}
 	}
 }
+
+func BenchmarkStoreMemory(b *testing.B) {
+	dbPath := "benchmark_store.db"
+	defer func() {
+		os.Remove(dbPath)
+		os.Remove(dbPath + "-shm")
+		os.Remove(dbPath + "-wal")
+	}()
+
+	sqldb, err := db.InitDB(dbPath)
+	if err != nil {
+		b.Fatalf("Failed to initialize database: %v", err)
+	}
+	defer sqldb.Close()
+
+	svc := NewMemoryService(sqldb)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		content := fmt.Sprintf("Memory content for entry %d", i)
+		err := svc.StoreMemory(content, "project:benchmark", "fact")
+		if err != nil {
+			b.Fatalf("StoreMemory failed: %v", err)
+		}
+	}
+}
+
+func BenchmarkDeleteMemory(b *testing.B) {
+	dbPath := "benchmark_delete.db"
+	defer func() {
+		os.Remove(dbPath)
+		os.Remove(dbPath + "-shm")
+		os.Remove(dbPath + "-wal")
+	}()
+
+	sqldb, err := db.InitDB(dbPath)
+	if err != nil {
+		b.Fatalf("Failed to initialize database: %v", err)
+	}
+	defer sqldb.Close()
+
+	svc := NewMemoryService(sqldb)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		content := fmt.Sprintf("Memory to delete %d", i)
+		contextKey := "project:benchmark"
+		svc.StoreMemory(content, contextKey, "fact")
+		b.StartTimer()
+
+		err = svc.DeleteMemory(content, contextKey)
+		if err != nil {
+			b.Fatalf("DeleteMemory failed: %v", err)
+		}
+	}
+}
