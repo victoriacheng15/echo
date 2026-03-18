@@ -166,11 +166,13 @@ func registerSearchMemoriesTool(s *server.MCPServer, svc *service.MemoryService,
 // Inputs:
 // - id (number, required): The ID of the memory to update.
 // - content (string, required): The new content for the memory.
+// - tags (string array, optional): Optional list of tags to update.
 func registerUpdateMemoryTool(s *server.MCPServer, svc *service.MemoryService) {
 	tool := mcp.NewTool("update_memory",
 		mcp.WithDescription("Updates the content (description) of an existing memory by its ID. Use this when the core instruction or information needs to be refined without losing its history (metadata, importance score)."),
 		mcp.WithNumber("id", mcp.Required(), mcp.Description("The ID of the memory to update.")),
 		mcp.WithString("content", mcp.Required(), mcp.Description("The new content (description) for the memory.")),
+		mcp.WithArray("tags", mcp.Description("Optional list of tags to update (e.g., ['security', 'go-standard'])."), mcp.WithStringItems()),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
@@ -182,8 +184,9 @@ func registerUpdateMemoryTool(s *server.MCPServer, svc *service.MemoryService) {
 		if err != nil {
 			return mcp.NewToolResultError("content is required"), nil
 		}
+		tags, _ := request.RequireStringSlice("tags")
 
-		if err := svc.UpdateMemoryContentByID(int64(id), content); err != nil {
+		if err := svc.UpdateMemoryByID(int64(id), content, tags); err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to update memory: %v", err)), nil
 		}
 

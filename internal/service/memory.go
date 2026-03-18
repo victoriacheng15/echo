@@ -243,15 +243,29 @@ func (s *MemoryService) SearchMemories(query string) ([]Memory, error) {
 
 // --- UPDATE ---
 
-// UpdateMemoryContentByID updates the content of a memory identified by its ID.
-func (s *MemoryService) UpdateMemoryContentByID(id int64, newContent string) error {
+// UpdateMemoryByID updates the content and optionally tags of a memory identified by its ID.
+func (s *MemoryService) UpdateMemoryByID(id int64, newContent string, tags []string) error {
 	newContent = strings.TrimSpace(newContent)
 	if len(newContent) < 1 || len(newContent) > 8192 {
 		return errors.New("content must be between 1 and 8,192 characters")
 	}
 
-	query := `UPDATE memories SET content = ? WHERE id = ?;`
-	_, err := s.db.Exec(query, newContent, id)
+	var tagsJSON sql.NullString
+	if len(tags) > 0 {
+		data, err := json.Marshal(tags)
+		if err == nil {
+			tagsJSON = sql.NullString{String: string(data), Valid: true}
+		}
+	}
+
+	query := `
+	UPDATE memories 
+	SET 
+		content = ?, 
+		tags = CASE WHEN ? IS NOT NULL THEN ? ELSE tags END 
+	WHERE id = ?;
+	`
+	_, err := s.db.Exec(query, newContent, tagsJSON, tagsJSON, id)
 	return err
 }
 
