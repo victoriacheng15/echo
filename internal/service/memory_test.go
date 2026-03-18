@@ -2,6 +2,7 @@ package service
 
 import (
 	"echo/internal/db"
+	"encoding/json"
 	"os"
 	"testing"
 
@@ -132,7 +133,7 @@ func TestMemoryService(t *testing.T) {
 		})
 	})
 
-	t.Run("UpdateMemoryContentByID table-driven", func(t *testing.T) {
+	t.Run("UpdateMemoryByID table-driven", func(t *testing.T) {
 		cleanup()
 		initialContent := "original content"
 		svc.StoreMemory(initialContent, "global", "directive")
@@ -146,29 +147,39 @@ func TestMemoryService(t *testing.T) {
 		tests := []struct {
 			name        string
 			newContent  string
+			tags        []string
 			wantErr     bool
 			checkResult bool
 		}{
-			{"valid update", "updated content", false, true},
-			{"empty content", "", true, false},
-			{"very long content", string(make([]byte, 8193)), true, false},
+			{"valid update content only", "updated content", nil, false, true},
+			{"valid update with tags", "content with tags", []string{"tag1", "tag2"}, false, true},
+			{"empty content", "", nil, true, false},
+			{"very long content", string(make([]byte, 8193)), nil, true, false},
 		}
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				err := svc.UpdateMemoryContentByID(id, tt.newContent)
+				err := svc.UpdateMemoryByID(id, tt.newContent, tt.tags)
 				if (err != nil) != tt.wantErr {
-					t.Errorf("UpdateMemoryContentByID() error = %v, wantErr %v", err, tt.wantErr)
+					t.Errorf("UpdateMemoryByID() error = %v, wantErr %v", err, tt.wantErr)
 				}
 
 				if tt.checkResult && !tt.wantErr {
 					var updatedContent string
-					err = sqldb.QueryRow("SELECT content FROM memories WHERE id = ?", id).Scan(&updatedContent)
+					var tagsJSON []byte
+					err = sqldb.QueryRow("SELECT content, tags FROM memories WHERE id = ?", id).Scan(&updatedContent, &tagsJSON)
 					if err != nil {
-						t.Fatalf("Failed to query updated content: %v", err)
+						t.Fatalf("Failed to query updated memory: %v", err)
 					}
 					if updatedContent != tt.newContent {
 						t.Errorf("Expected content %q, got %q", tt.newContent, updatedContent)
+					}
+					if tt.tags != nil {
+						var actualTags []string
+						json.Unmarshal(tagsJSON, &actualTags)
+						if len(actualTags) != len(tt.tags) {
+							t.Errorf("Expected %d tags, got %d", len(tt.tags), len(actualTags))
+						}
 					}
 				}
 			})
