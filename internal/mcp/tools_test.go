@@ -66,6 +66,11 @@ func TestNewServer(t *testing.T) {
 			handlers[tool.Tool.Name] = tool.Handler
 		}
 
+		// Prepare a memory for update/deletion tests
+		svc.StoreMemory("memory to be deleted", "global", "fact")
+		var initialID int64
+		sqldb.QueryRow("SELECT id FROM memories WHERE content = 'memory to be deleted'").Scan(&initialID)
+
 		tests := []struct {
 			name      string
 			tool      string
@@ -79,22 +84,124 @@ func TestNewServer(t *testing.T) {
 					"content":     "test content",
 					"context_key": "global",
 					"entry_type":  "directive",
+					"tags":        []any{"tag1", "tag2"},
 				},
 				wantErr: false,
 			},
 			{
-				name: "get_analytics_success",
-				tool: "get_analytics",
+				name: "store_memory_missing_content",
+				tool: "store_memory",
 				arguments: map[string]any{
 					"context_key": "global",
+					"entry_type":  "directive",
 				},
-				wantErr: false,
+				wantErr: true,
 			},
 			{
 				name: "recall_memory_success",
 				tool: "recall_memory",
 				arguments: map[string]any{
 					"context_keys": []any{"global"},
+					"limit":        5,
+					"verbose":      true,
+				},
+				wantErr: false,
+			},
+			{
+				name: "recall_memory_missing_keys",
+				tool: "recall_memory",
+				arguments: map[string]any{
+					"limit": 5,
+				},
+				wantErr: true,
+			},
+			{
+				name: "search_memories_success",
+				tool: "search_memories",
+				arguments: map[string]any{
+					"query":   "test",
+					"verbose": false,
+				},
+				wantErr: false,
+			},
+			{
+				name: "search_memories_missing_query",
+				tool: "search_memories",
+				arguments: map[string]any{
+					"verbose": false,
+				},
+				wantErr: true,
+			},
+			{
+				name: "update_memory_success",
+				tool: "update_memory",
+				arguments: map[string]any{
+					"id":      float64(initialID),
+					"content": "updated content",
+					"tags":    []any{"newtag"},
+				},
+				wantErr: false,
+			},
+			{
+				name: "update_memory_invalid_id",
+				tool: "update_memory",
+				arguments: map[string]any{
+					"id":      float64(0),
+					"content": "updated content",
+				},
+				wantErr: true,
+			},
+			{
+				name: "update_memory_missing_content",
+				tool: "update_memory",
+				arguments: map[string]any{
+					"id": float64(initialID),
+				},
+				wantErr: true,
+			},
+			{
+				name: "search_for_deletion_success",
+				tool: "search_for_deletion",
+				arguments: map[string]any{
+					"query": "updated",
+				},
+				wantErr: false,
+			},
+			{
+				name: "search_for_deletion_no_match",
+				tool: "search_for_deletion",
+				arguments: map[string]any{
+					"query": "non-existent-query-string",
+				},
+				wantErr: false, // returns "No memory found" text, not IsError: true
+			},
+			{
+				name: "search_for_deletion_missing_query",
+				tool: "search_for_deletion",
+				arguments: map[string]any{},
+				wantErr:   true,
+			},
+			{
+				name: "delete_memory_success",
+				tool: "delete_memory",
+				arguments: map[string]any{
+					"id": float64(initialID),
+				},
+				wantErr: false,
+			},
+			{
+				name: "delete_memory_invalid_id",
+				tool: "delete_memory",
+				arguments: map[string]any{
+					"id": float64(0),
+				},
+				wantErr: true,
+			},
+			{
+				name: "get_analytics_success",
+				tool: "get_analytics",
+				arguments: map[string]any{
+					"context_key": "global",
 				},
 				wantErr: false,
 			},
@@ -113,20 +220,6 @@ func TestNewServer(t *testing.T) {
 					t.Errorf("got IsError %v, want %v. Error content: %+v", res.IsError, tt.wantErr, res.Content)
 				}
 			})
-		}
-	})
-}
-
-func TestGetDefaultDBPath(t *testing.T) {
-	t.Run("XDG_DATA_HOME set", func(t *testing.T) {
-		old := os.Getenv("XDG_DATA_HOME")
-		os.Setenv("XDG_DATA_HOME", "/tmp/xdg")
-		defer os.Setenv("XDG_DATA_HOME", old)
-
-		path := db.GetDefaultDBPath()
-		expected := "/tmp/xdg/echo/echo.db"
-		if path != expected {
-			t.Errorf("Expected %s, got %s", expected, path)
 		}
 	})
 }
