@@ -26,8 +26,8 @@ You MUST use lower-case, hyphenated strings for `context_key`. Follow these patt
 2. **Reinforcement:** Use `store_memory` with an existing `content` and `context_key` to reinforce an entry (it triggers an `ON CONFLICT` importance reinforcement).
 3. **Surgical Updates:** Use `update_memory` with a specific `id` to refine the description (text) of an existing memory without losing its importance score or history.
 4. **Three-Stage Deletion:** To delete a memory, you MUST:
-    - a. Use `search_for_deletion` to retrieve the exact memory.
+    - a. Use `search_for_deletion` to retrieve the exact memory and its unique `id`.
     - b. Display the memory to the user and obtain explicit confirmation.
-    - c. Use `delete_memory` ONLY after the user confirms.
+    - c. Use `delete_memory` with the provided `id` ONLY after the user confirms.
 5. **Chunking:** Keep each memory focused on a single concept (max 8KB). If content is larger, split it into logical parts (e.g., `part-1`).
 6. **Categorization:** Use the `tags` array for cross-context indexing (e.g., `["security", "go-standard"]\`).

@@ -129,11 +129,17 @@ func BenchmarkDeleteMemory(b *testing.B) {
 		content := fmt.Sprintf("Memory to delete %d", i)
 		contextKey := "project:benchmark"
 		svc.StoreMemory(content, contextKey, "fact")
-		b.StartTimer()
 
-		err = svc.DeleteMemory(content, contextKey)
+		var id int64
+		err = sqldb.QueryRow("SELECT id FROM memories WHERE content = ?", content).Scan(&id)
 		if err != nil {
-			b.Fatalf("DeleteMemory failed: %v", err)
+			b.Fatalf("Failed to get ID for benchmark: %v", err)
+		}
+
+		b.StartTimer()
+		err = svc.DeleteMemoryByID(id)
+		if err != nil {
+			b.Fatalf("DeleteMemoryByID failed: %v", err)
 		}
 	}
 }
