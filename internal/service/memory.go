@@ -271,10 +271,10 @@ func (s *MemoryService) UpdateMemoryByID(id int64, newContent string, tags []str
 
 // --- DELETE ---
 
-// DeleteMemory removes a specific memory from the database.
-func (s *MemoryService) DeleteMemory(content, contextKey string) error {
-	query := `DELETE FROM memories WHERE content = ? AND context_key = ?;`
-	_, err := s.db.Exec(query, content, contextKey)
+// DeleteMemoryByID removes a specific memory from the database by its ID.
+func (s *MemoryService) DeleteMemoryByID(id int64) error {
+	query := `DELETE FROM memories WHERE id = ?;`
+	_, err := s.db.Exec(query, id)
 	return err
 }
 

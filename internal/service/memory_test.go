@@ -284,28 +284,34 @@ func TestMemoryService(t *testing.T) {
 		})
 	})
 
-	t.Run("DeleteMemory", func(t *testing.T) {
+	t.Run("DeleteMemoryByID", func(t *testing.T) {
 		cleanup()
-		svc.StoreMemory("delete me", "global", "directive")
+		content := "delete me"
+		svc.StoreMemory(content, "global", "directive")
+
+		var id int64
+		err := sqldb.QueryRow("SELECT id FROM memories WHERE content = ?", content).Scan(&id)
+		if err != nil {
+			t.Fatalf("Failed to get ID for deletion test: %v", err)
+		}
 
 		tests := []struct {
 			name       string
-			content    string
-			contextKey string
+			id         int64
 			wantExists bool
 		}{
-			{"delete existing", "delete me", "global", false},
-			{"delete non-existing", "non-existent", "global", false},
+			{"delete existing", id, false},
+			{"delete non-existing", 9999, false},
 		}
 
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				if err := svc.DeleteMemory(tt.content, tt.contextKey); err != nil {
-					t.Fatalf("DeleteMemory() error = %v", err)
+				if err := svc.DeleteMemoryByID(tt.id); err != nil {
+					t.Fatalf("DeleteMemoryByID() error = %v", err)
 				}
 
 				var count int
-				sqldb.QueryRow("SELECT COUNT(*) FROM memories WHERE content = ? AND context_key = ?", tt.content, tt.contextKey).Scan(&count)
+				sqldb.QueryRow("SELECT COUNT(*) FROM memories WHERE id = ?", tt.id).Scan(&count)
 				if tt.wantExists && count == 0 {
 					t.Errorf("Expected memory to exist, but it was deleted")
 				}
@@ -315,9 +321,9 @@ func TestMemoryService(t *testing.T) {
 			})
 		}
 
-		t.Run("DeleteMemory DB error", func(t *testing.T) {
+		t.Run("DeleteMemoryByID DB error", func(t *testing.T) {
 			sqldb.Close()
-			err := svc.DeleteMemory("fail", "global")
+			err := svc.DeleteMemoryByID(1)
 			if err == nil {
 				t.Error("Expected DB error for closed connection, got nil")
 			}

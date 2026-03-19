@@ -224,22 +224,17 @@ func registerDeletionTools(s *server.MCPServer, svc *service.MemoryService) {
 		return mcp.NewToolResultText(string(data)), nil
 	})
 
-	// Step 2: Delete the memory using the exact content and key
+	// Step 2: Delete the memory using the ID
 	deleteTool := mcp.NewTool("delete_memory",
 		mcp.WithDescription("Step 2 of 2: Deletes a memory. You MUST ONLY call this tool after the user has explicitly confirmed the deletion of the memory returned by search_for_deletion. This is a destructive, non-reversible action."),
-		mcp.WithString("content", mcp.Required(), mcp.Description("The exact content of the memory to delete.")),
-		mcp.WithString("context_key", mcp.Required(), mcp.Description("The exact context key of the memory to delete.")),
+		mcp.WithNumber("id", mcp.Required(), mcp.Description("The ID of the memory to delete.")),
 	)
 	s.AddTool(deleteTool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		content, err := request.RequireString("content")
-		if err != nil {
-			return mcp.NewToolResultError("content is required"), nil
+		id := request.GetInt("id", 0)
+		if id == 0 {
+			return mcp.NewToolResultError("id is required and must be non-zero"), nil
 		}
-		contextKey, err := request.RequireString("context_key")
-		if err != nil {
-			return mcp.NewToolResultError("context_key is required"), nil
-		}
-		if err := svc.DeleteMemory(content, contextKey); err != nil {
+		if err := svc.DeleteMemoryByID(int64(id)); err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to delete memory: %v", err)), nil
 		}
 		return mcp.NewToolResultText("Memory deleted successfully."), nil
