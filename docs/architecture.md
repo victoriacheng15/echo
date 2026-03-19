@@ -14,13 +14,23 @@ The Echo MCP Server is designed with a strict separation of concerns, ensuring t
 ### 1. Transport Layer (`cmd/mcp`)
 
 - Handles the STDIO lifecycle.
-- Registers the 5 core tools with the MCP framework:
-  - `store_memory`
-  - `recall_memory`
-  - `search_memories`
-  - `update_memory`
-  - `delete_memory`
+- Registers the core tools with the MCP framework:
+  - `store_memory` (Create/Reinforce)
+  - `recall_memory` (Contextual Read)
+  - `search_memories` (Keyword Read)
+  - `update_memory` (Surgical: Targeted via surrogate ID)
+  - `delete_memory` (Surgical: Targeted via surrogate ID)
 - Maps raw JSON arguments to strong Go types before passing them to the service.
+
+## Surgical Operations & Safety
+
+To prevent accidental data loss and ensure deterministic state control, Echo employs a **"Retrieve -> Confirm -> Act"** safety protocol for all destructive or surgical modifications:
+
+1. **Discovery (Search)**: The AI agent uses `search_memories` or `search_for_deletion` to identify the target record and retrieve its unique surrogate `id`.
+2. **User Confirmation**: The agent MUST present the specific memory to the user for explicit confirmation. This acts as a human-in-the-loop guardrail.
+3. **Deterministic Execution**: Only after confirmation does the agent call `update_memory` or `delete_memory` using the immutable `id`. This eliminates the risk of "mass-deletion" caused by content collisions where multiple identical or similar records might exist across different contexts.
+
+## Core Components (Logic & Persistence)
 
 ### 2. Business Logic (`internal/service`)
 
