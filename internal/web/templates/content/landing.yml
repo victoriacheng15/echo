@@ -1,20 +1,20 @@
 header:
   project_name: "Echo"
-  site_url: "https://victoriacheng15.github.io/echo" # Example URL
+  site_url: "https://victoriacheng15.github.io/echo"
 
 system_specification:
-  objective: "Echo is an MCP (Model Context Protocol) server that acts as a persistent memory layer, providing AI agents with the ability to store and recall knowledge across sessions."
-  stack: "Go (Golang), SQLite (FTS5/WAL), MCP (Model Context Protocol)"
+  objective: "Echo is a high-precision MCP (Model Context Protocol) server that provides AI agents with a deterministic memory layer, integrating FTS5-backed contextual retrieval with autonomous DuckDB analytics for knowledge ROI and resource observability."
+  stack: "Go (Golang), SQLite (FTS5/WAL), MCP (Model Context Protocol), JSON-RPC 2.0, DuckDB"
   pattern: "MCP Server"
   entry_point: "cmd/mcp/main.go"
   persistence_strategy: "Local SQLite with automated FTS5 synchronization"
-  observability: "TBD"
+  observability: "Autonomous FinOps & GreenOps Telemetry via embedded DuckDB"
   machine_registry: "/api/evolution-registry.json"
 
 hero:
   headline: "Persistent Memory for Intelligent AI Agents"
   sub_headline: "Echo is built with Go and SQLite and is a persistent memory for AI agents."
-  brief_description: "Echo is an MCP (Model Context Protocol) server that acts as a persistent memory layer, providing AI agents with the ability to store and recall knowledge across sessions."
+  brief_description: "Echo is a high-precision MCP (Model Context Protocol) server that provides AI agents with a deterministic memory layer, integrating FTS5-backed contextual retrieval with autonomous DuckDB analytics for knowledge ROI and resource observability."
   cta_text: "Explore on GitHub"
   cta_link: "https://github.com/victoriacheng15/echo"
   secondary_cta_text: "See Evolution"
@@ -26,6 +26,7 @@ what_is_echo:
     - "Explain the concept of long-term memory for AI agents."
     - "Position Echo as a solution for agents to store, recall, and manage information across sessions, overcoming the limitations of stateless interactions."
     - "Highlight its role in enhancing AI capabilities by providing historical context and learned knowledge."
+    - "Integrates a specialized DuckDB analytical engine to track knowledge ROI, unit economics (FinOps), and the carbon footprint (GreenOps) of every interaction."
 
 key_features:
   title: "Core Capabilities"
@@ -45,6 +46,12 @@ key_features:
     - name: "Delete Memory"
       description: "Management of outdated or irrelevant information."
       icon: "🗑️"
+    - name: "Get Analytics"
+      description: "Comprehensive resource observability, tracking cost-efficiency and environmental impact."
+      icon: "📊"
+    - name: "Search for Deletion"
+      description: "Deterministic discovery protocol for surgical data governance and safety."
+      icon: "🛡️"
 
 why_it_matters:
   title: "Driving Smarter, More Capable AI"

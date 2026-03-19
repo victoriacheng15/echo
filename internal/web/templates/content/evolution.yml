@@ -54,3 +54,14 @@ chapters:
         description: |
           - Exposed the DuckDB analytical engine via MCP, providing AI agents with real-time 'Self-Awareness' of their resource impact and context utility.
           - Completed the 'FinOps Feedback Loop' by enabling agents to query their own cost-per-feature and carbon footprint metrics directly.
+  - title: "Memory Precision & Data Integrity"
+    intro: "Hardening the memory lifecycle against accidental data loss through deterministic surrogate ID targeting."
+    timeline:
+      - date: "2026-03-19"
+        title: "Hardening: Surrogate ID-Based Deletion"
+        artifacts:
+          - name: "ADR 004: ID-Based Deletion"
+            url: "docs/decisions/004-id-based-deletion.md"
+        description: |
+          - Eliminated critical 'Content Collision' failure modes by transitioning from natural keys to unique surrogate IDs, ensuring absolute precision in destructive operations.
+          - Prevented 'Accidental Mass-Deletion' by ensuring the AI agent can only target a specific, unique record even when identical content exists across different project contexts.

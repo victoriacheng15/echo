@@ -22,6 +22,7 @@ This platform evolved through intentional phases. See the full journey with ADRs
 - **Ch 2: Performance** – FTS5 Inverted Index for $O(\log n)$ keyword search (230x faster).
 - **Ch 3: Workflow** – Custom Go-based static generator for living architectural documentation.
 - **Ch 4: Analytics** – DuckDB integration for knowledge ROI and autonomous memory refinement.
+- **Ch 5: Precision** – Surgical memory management with surrogate IDs to eliminate content collisions and ensure deterministic state control.
 
 Each milestone links to Architecture Decision Records (ADRs) showing the *why* behind each change.
 
