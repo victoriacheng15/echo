@@ -1,4 +1,4 @@
-BINARY_NAME=echo
+BINARY_NAME=echo-cli
 BUILD_DIR=bin
 LINT_IMAGE=ghcr.io/igorshubovych/markdownlint-cli:v0.44.0
 GO_TAGS=-tags "sqlite_fts5"
@@ -26,7 +26,7 @@ else
 endif
 
 # Installation settings
-PREFIX ?= $(shell echo $$HOME)/.local
+PREFIX ?= /usr/local
 BIN_DIR = $(PREFIX)/bin
 
 .PHONY: all help update vet format test test-cov bench build build-web setup-tailwind clean install uninstall lint
@@ -63,7 +63,7 @@ lint:
 install: build
 	@echo "Updating $(BINARY_NAME)..."
 	mkdir -p $(BIN_DIR)
-	install -m 755 $(BUILD_DIR)/$(BINARY_NAME) $(BIN_DIR)/$(BINARY_NAME)
+	sudo install -m 755 $(BUILD_DIR)/$(BINARY_NAME) $(BIN_DIR)/$(BINARY_NAME)
 	rm $(BUILD_DIR)/$(BINARY_NAME)
 	@echo "Echo updated in $(BIN_DIR)"
 
