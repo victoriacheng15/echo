@@ -79,7 +79,7 @@ func main() {
 	// 4. Dispatch to CLI Subcommands (Human-facing)
 	command := flag.Arg(0)
 	switch command {
-	case "store", "recall", "search", "delete", "maintain":
+	case "store", "recall", "search", "delete", "maintain", "help":
 		// CLI Dispatcher (Human interface)
 		dispatcher := cli.NewDispatcher(memorySvc, analyticsSvc, rateSvc, *outputFormat)
 		if err := dispatcher.Run(flag.Args()); err != nil {

@@ -318,6 +318,13 @@ func (s *MemoryService) GetTotalEventCount() (int, error) {
 	return count, err
 }
 
+// RebuildIndex performs an FTS5 maintenance operation to optimize and rebuild the search index.
+func (s *MemoryService) RebuildIndex() error {
+	query := `INSERT INTO memories_fts(memories_fts) VALUES('rebuild');`
+	_, err := s.db.Exec(query)
+	return err
+}
+
 // --- HELPERS ---
 
 func (s *MemoryService) scanMemories(rows *sql.Rows) ([]Memory, error) {
