@@ -108,7 +108,7 @@ bench:
 build:
 	echo "Building binary..." && \
 	mkdir -p $(BUILD_DIR) && \
-	go build $(GO_TAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/mcp
+	go build $(GO_TAGS) -o $(BUILD_DIR)/$(BINARY_NAME) ./cmd/echo
 
 # Build the static web application site into dist/
 web-build: setup-tailwind
