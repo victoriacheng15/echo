@@ -6,6 +6,7 @@ This directory contains the Architecture Decision Records for the Echo MCP Serve
 
 | ADR | Title | Status |
 | :--- | :--- | :--- |
+| [005](005-cli-expansion.md) | Expand into a Dual-Interface Application (CLI + MCP) | 🔵 Accepted |
 | [004](004-id-based-deletion.md) | Implement Surrogate ID-Based Memory Deletion | 🔵 Accepted |
 | [003](003-duckdb-analytics.md) | Implement Zero-Config Analytics via DuckDB and Telemetry | 🔵 Accepted |
 | [002](002-fts5-search.md) | Implement FTS5 Inverted Index for Keyword Search | 🔵 Accepted |

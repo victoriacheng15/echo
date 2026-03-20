@@ -65,3 +65,13 @@ chapters:
         description: |
           - Eliminated critical 'Content Collision' failure modes by transitioning from natural keys to unique surrogate IDs, ensuring absolute precision in destructive operations.
           - Prevented 'Accidental Mass-Deletion' by ensuring the AI agent can only target a specific, unique record even when identical content exists across different project contexts.
+  - title: "User Options & Interface Expansion"
+    intro: "Providing users with the choice between AI-driven MCP interactions and terminal-based human curation."
+    timeline:
+      - date: "2026-03-20"
+        title: "Expansion: Standard Flag CLI"
+        artifacts:
+          - name: "ADR 005: CLI Expansion"
+            url: "docs/decisions/005-cli-expansion.md"
+        description: |
+          - Established a Dual-Interface architecture that offers users the flexibility to interact with the SQLite 'Brain' through either the AI-driven MCP server or the terminal-based CLI.

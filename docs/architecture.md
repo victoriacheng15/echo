@@ -1,26 +1,47 @@
 # System Architecture
 
-The Echo MCP Server is designed with a strict separation of concerns, ensuring that the transport protocol (MCP) is entirely decoupled from the business logic and persistence layers. This allows for high testability and future expansion (e.g., adding a CLI interface).
+The Echo system is a Dual-Interface Application designed with a strict separation of concerns. This architecture ensures that core business logic and persistence layers are entirely decoupled from the interface protocols, allowing for simultaneous support of AI-driven MCP interactions and manual terminal-based curation.
 
 ## High-Level Data Flow
 
-1. **Client (AI Agent / IDE):** Sends a JSON-RPC 2.0 request over STDIO.
-2. **Transport Layer (`cmd/mcp`):** The `mark3labs/mcp-go` server parses the request, validates the tool name, and extracts the arguments.
-3. **Business Logic (`internal/service`):** The `MemoryService` validates the payload (e.g., enforcing the 8KB limit, checking context key regex) and determines the appropriate database interaction.
-4. **Persistence Layer (`internal/db`):** Executes the SQL query against the local `echo.db` SQLite file.
+```mermaid
+graph TD
+    subgraph "Interfaces"
+        A[AI Agent / IDE] -- "JSON-RPC 2.0 (STDIO)" --> B[MCP Transport Layer]
+        H[Human / Terminal] -- "Flag Commands" --> I[CLI Dispatcher]
+    end
+
+    subgraph "Core Logic"
+        B -- "Strong Types" --> C[Shared Service Layer]
+        I -- "Shared State" --> C
+        C -- "Validation" --> D{Storage Engine}
+    end
+
+    subgraph "Persistence & Analytics"
+        D -- "WAL Persistence" --> E[(SQLite LTM)]
+        D -- "Full-Text Search" --> F[(FTS5 Index)]
+        D -- "Telemetry" --> G[(DuckDB Analytics)]
+    end
+```
 
 ## Core Components
 
-### 1. Transport Layer (`cmd/mcp`)
+### 1. Interface Layer (`cmd/echo`)
 
-- Handles the STDIO lifecycle.
-- Registers the core tools with the MCP framework:
-  - `store_memory` (Create/Reinforce)
-  - `recall_memory` (Contextual Read)
-  - `search_memories` (Keyword Read)
-  - `update_memory` (Surgical: Targeted via surrogate ID)
-  - `delete_memory` (Surgical: Targeted via surrogate ID)
-- Maps raw JSON arguments to strong Go types before passing them to the service.
+- **Multiplexing**: Implements "Fat Binary" patterns to reduce deployment complexity.
+- **Smart TTY Routing**: Automatically starts the MCP server when standard input is not a terminal (AI host) and provides an interactive CLI when standard input is a terminal (Human).
+- **Service Injection**: Handles the initialization and dependency injection of all shared services.
+
+### 2. CLI Dispatcher (`internal/cli`)
+
+- **Subcommand Routing**: Manages the lifecycle of `store`, `recall`, `search`, `delete`, and `maintain` commands.
+- **Multi-Format Rendering**: Supports `table`, `json`, and `csv` output formats to accommodate both human readability and automated data pipelines.
+- **Maintenance Operations**: Provides direct administrative control over FTS5 index rebuilding and DuckDB analytical synchronization.
+
+### 3. MCP Transport Layer (`internal/mcp`)
+
+- **Tool Registration**: Exposes the shared service layer to AI agents via standard MCP tool definitions.
+- **Contract Enforcement**: Maps raw JSON arguments to strong Go types, ensuring strict adherence to the memory governance rules.
 
 ## Surgical Operations & Safety
 
