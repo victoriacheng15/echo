@@ -23,6 +23,7 @@ This platform evolved through intentional phases. See the full journey with ADRs
 - **Ch 3: Workflow** – Custom Go-based static generator for living architectural documentation.
 - **Ch 4: Analytics** – DuckDB integration for knowledge ROI and autonomous memory refinement.
 - **Ch 5: Precision** – Surgical memory management with surrogate IDs to eliminate content collisions and ensure deterministic state control.
+- **Ch 6: Dual-Interface** – Standard Flag CLI for human-in-the-loop curation, enabling manual storage, recall, and maintenance of the SQLite "Brain."
 
 Each milestone links to Architecture Decision Records (ADRs) showing the *why* behind each change.
 
@@ -39,16 +40,26 @@ The platform leverages a robust set of modern technologies for its core function
 
 ### System Architecture Overview
 
-The diagram below illustrates the high-level flow of memory data from AI agent requests to persistent storage and optimized retrieval.
+The diagram below illustrates the dual-interface architecture, where both AI agents and human operators interact with a unified knowledge state through shared business services.
 
 ```mermaid
 graph TD
-    A[AI Agent / IDE] -- JSON-RPC 2.0 --> B[MCP Transport Layer]
-    B -- Strong Types --> C[Memory Service]
-    C -- Validation --> D{Storage Engine}
-    D -- WAL Persistence --> E[(SQLite)]
-    D -- Full-Text Search --> F[(FTS5 Index)]
-    D -- Telemetry --> G[(DuckDB Analytics)]
+    subgraph "Interfaces"
+        A[AI Agent] -- "JSON-RPC 2.0" --> B[MCP Transport Layer]
+        H[Terminal] -- "Flag Commands" --> I[CLI Dispatcher]
+    end
+
+    subgraph "Core Logic"
+        B -- "Strong Types" --> C[Shared Service Layer]
+        I -- "Shared State" --> C
+        C -- "Validation" --> D{Storage Engine}
+    end
+
+    subgraph "Persistence & Analytics"
+        D -- "WAL Persistence" --> E[(SQLite)]
+        D -- "Full-Text Search" --> F[(FTS5 Index)]
+        D -- "Telemetry" --> G[(DuckDB Analytics)]
+    end
 ```
 
 ---
@@ -96,32 +107,53 @@ Ensure you have the following installed on your system:
 Echo requires CGO for SQLite support. Use the provided Makefile for a guaranteed build:
 
 ```bash
-# Build the binary (using Nix recommended)
-nix develop -c make build
-
-# Manual build
+# Build the binary
 make build
 
-# Install to ~/.local/bin/echo
+# Install to /usr/local/bin/echo-cli
 make install
 ```
 
 ### 2. Configuration
 
-Add Echo to your Gemini CLI configuration (usually `~/.gemini/settings.json`):
+Add Echo to your MCP client configuration (e.g., `~/.gemini/settings.json` or `claude_desktop_config.json`):
 
 ```json
 {
   "mcpServers": {
     "echo": {
-      "command": "/home/[user]/.local/bin/echo",
+      "command": "/usr/local/bin/echo-cli",
       "args": ["--db", "/home/[user]/.local/share/echo/echo.db"]
     }
   }
 }
 ```
 
-### 3. Verification & Observability
+### 3. CLI Operations (Manual Curation)
+
+Echo now supports a dual-interface architecture. You can manually curate the "brain" from your terminal:
+
+- **Recall Memories**
+```bash
+echo-cli recall -contexts "project:echo,global" -limit 5
+```
+
+- **Keyword Search**
+```bash
+echo-cli search -query "commit message standard"
+```
+
+- **Manual Storage**
+```bash
+echo-cli store -content "Always use tabs" -context "global" -type "directive" -tags "styling,go"
+```
+
+- **Database Maintenance**
+```bash
+echo-cli maintain --rebuild --sync
+```
+
+### 4. Verification & Observability
 
 Once installed, you can verify performance and audit the "brain" directly:
 
