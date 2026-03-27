@@ -1,8 +1,8 @@
 # Echo
 
-**Echo** is a Model Context Protocol (MCP) server designed to provide AI agents with a persistent, contextual "brain." By bridging the gap between stateless AI reasoning and local filesystem persistence, Echo allows your AI agent to store and recall architectural preferences, project-specific snippets, and frequent instructions in a local SQLite database.
+**Echo** is a dual-interface persistent memory layer designed to provide both AI agents and human operators with a contextual "brain." It functions as both a **Model Context Protocol (MCP)** server for autonomous agents and a **Command Line Interface (CLI)** for manual curation.
 
-Unlike standard LLM sessions that reset context every time the process exits, Echo creates a long-term memory (LTM) layer. This ensures that established project preferences and instructions are automatically inherited by the AI in all future sessions, across any directory on your machine.
+By bridging the gap between stateless AI reasoning and local persistence, Echo allows you to store and recall architectural preferences, project-specific snippets, and frequent instructions in a local SQLite database. Unlike standard LLM sessions that reset context every time the process exits, Echo creates a long-term memory (LTM) layer that ensures established preferences are automatically inherited in all future sessions, across any directory on your machine.
 
 🌐 [Project Portal](https://victoriacheng15.github.io/echo/)
 
@@ -81,7 +81,7 @@ graph TD
 ### 🛡️ Engineering Standards
 
 - **Contract Enforcement:** Validates memory payloads against strict JSON schemas and 8KB content limits to prevent context bloat.
-- **Reproducible Runtimes:** Leverages **Nix** flakes to ensure the CGO-linked SQLite environment is identical across all developer machines.
+- **Reproducible Runtimes:** Leverages **Nix** flakes to ensure the CGO-linked SQLite environment is identical across different local machines.
 - **Decision Framework:** Adopted Architectural Decision Records (ADRs) to document system evolution and manage technical design debt.
 
 ---
@@ -183,3 +183,4 @@ make test-cov
 ```
 
 </details>
+>
