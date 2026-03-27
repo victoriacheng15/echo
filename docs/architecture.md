@@ -69,7 +69,7 @@ To prevent accidental data loss and ensure deterministic state control, Echo emp
 
 Echo is designed with performance in mind (P99 < 10ms) to ensure it does not bottleneck AI reasoning loops.
 
-The following benchmarks were recorded on the current production environment:
+The following benchmarks were recorded on the machine below:
 
 - **CPU:** AMD Ryzen 7 7840HS (8C/16T) @ 3.8GHz
 - **Storage:** NVMe SSD
