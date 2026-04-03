@@ -176,8 +176,8 @@ func TestNewServer(t *testing.T) {
 				wantErr: false, // returns "No memory found" text, not IsError: true
 			},
 			{
-				name: "search_for_deletion_missing_query",
-				tool: "search_for_deletion",
+				name:      "search_for_deletion_missing_query",
+				tool:      "search_for_deletion",
 				arguments: map[string]any{},
 				wantErr:   true,
 			},

@@ -1,20 +1,25 @@
 package service
 
-import (
-	"fmt"
-	"os"
-
-	"gopkg.in/yaml.v2"
-)
-
 // RateCard defines the pricing and emission factors.
 type RateCard struct {
-	ComputeCADPerMs      float64 `yaml:"compute_cad_per_ms"`
-	EnergyCADPerJoule    float64 `yaml:"energy_cad_per_joule"`
-	CarbonGPerJoule      float64 `yaml:"carbon_g_per_joule"`
-	TargetHitRate        float64 `yaml:"target_hit_rate"`
-	DecayStep            int     `yaml:"decay_step"`
-	RefineIntervalEvents int     `yaml:"refine_interval_events"`
+	ComputeCADPerMs      float64
+	EnergyCADPerJoule    float64
+	CarbonGPerJoule      float64
+	TargetHitRate        float64
+	DecayStep            int
+	RefineIntervalEvents int
+}
+
+// DefaultRateCard provides Canada-based FinOps and GreenOps benchmarks.
+// These are embedded directly in the binary to ensure the analytics engine
+// is "Zero-Config" and always functional regardless of working directory.
+var DefaultRateCard = RateCard{
+	ComputeCADPerMs:      0.0001,      // $0.10 CAD per second
+	EnergyCADPerJoule:    0.000000042, // $0.15 CAD per kWh
+	CarbonGPerJoule:      0.000042,    // 150g CO2e per kWh
+	TargetHitRate:        0.15,
+	DecayStep:            1,
+	RefineIntervalEvents: 50,
 }
 
 // RateService manages the financial and environmental configuration.
@@ -22,19 +27,9 @@ type RateService struct {
 	Card RateCard
 }
 
-// NewRateService loads rates from a YAML file.
-func NewRateService(configPath string) (*RateService, error) {
-	data, err := os.ReadFile(configPath)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read rate card: %w", err)
-	}
-
-	var card RateCard
-	if err := yaml.Unmarshal(data, &card); err != nil {
-		return nil, fmt.Errorf("failed to parse rate card: %w", err)
-	}
-
-	return &RateService{Card: card}, nil
+// NewRateService initializes a RateService with the default card.
+func NewRateService() *RateService {
+	return &RateService{Card: DefaultRateCard}
 }
 
 // CalculateEconomicImpact returns the cost and carbon for a given event.

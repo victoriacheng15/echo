@@ -49,8 +49,13 @@ func main() {
 	defer sqldb.Close()
 
 	dataDir := db.GetDefaultDataDir()
-	rateSvc, _ := service.NewRateService(filepath.Join("configs", "rates.yml"))
-	analyticsSvc, _ := service.NewAnalyticsService(dataDir)
+	// RateService now uses embedded defaults (Zero-Config)
+	rateSvc := service.NewRateService()
+
+	analyticsSvc, err := service.NewAnalyticsService(dataDir)
+	if err != nil {
+		log.Printf("Warning: AnalyticsService initialization failed: %v", err)
+	}
 	if analyticsSvc != nil {
 		defer analyticsSvc.Close()
 	}
@@ -98,4 +103,3 @@ func isTerminal(f *os.File) bool {
 	stat, _ := f.Stat()
 	return (stat.Mode() & os.ModeCharDevice) != 0
 }
-
