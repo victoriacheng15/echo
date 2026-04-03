@@ -134,21 +134,25 @@ Add Echo to your MCP client configuration (e.g., `~/.gemini/settings.json` or `c
 Echo now supports a dual-interface architecture. You can manually curate the "brain" from your terminal:
 
 - **Recall Memories**
+
 ```bash
 echo-cli recall -contexts "project:echo,global" -limit 5
 ```
 
 - **Keyword Search**
+
 ```bash
 echo-cli search -query "commit message standard"
 ```
 
 - **Manual Storage**
+
 ```bash
 echo-cli store -content "Always use tabs" -context "global" -type "directive" -tags "styling,go"
 ```
 
 - **Database Maintenance**
+
 ```bash
 echo-cli maintain --rebuild --sync
 ```

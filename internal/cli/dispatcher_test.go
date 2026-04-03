@@ -158,7 +158,7 @@ func TestDispatcher_OutputFormats(t *testing.T) {
 func TestDispatcher_Maintain(t *testing.T) {
 	memSvc := setupTestDB(t)
 	d := NewDispatcher(memSvc, nil, nil, "table")
-	
+
 	// 1. Test without sync/rebuild flags should fail
 	err := d.Run([]string{"maintain"})
 	if err == nil {

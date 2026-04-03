@@ -31,9 +31,7 @@ func NewServer(memorySvc *service.MemoryService, analyticsSvc *service.Analytics
 	registerDeletionTools(s, memorySvc)                       // Delete
 
 	// Register Analytical Tools (Phase 6.5)
-	if analyticsSvc != nil && rateSvc != nil {
-		registerGetAnalyticsTool(s, analyticsSvc, rateSvc)
-	}
+	registerGetAnalyticsTool(s, analyticsSvc, rateSvc)
 
 	return s
 }
@@ -252,6 +250,10 @@ func registerGetAnalyticsTool(s *server.MCPServer, svc *service.AnalyticsService
 	)
 
 	s.AddTool(tool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
+		if svc == nil || rateSvc == nil {
+			return mcp.NewToolResultError("Analytics engine is unavailable. Ensure DuckDB is installed and configs/rates.yml is present."), nil
+		}
+
 		// Sync events before querying to ensure up-to-date data
 		if err := svc.SyncEvents(); err != nil {
 			log.Printf("Warning: failed to sync events for analytics: %v", err)
