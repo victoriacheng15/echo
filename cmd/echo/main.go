@@ -9,7 +9,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 
 	mcp_server "github.com/mark3labs/mcp-go/server"
 )
@@ -52,17 +54,20 @@ func main() {
 	// RateService now uses embedded defaults (Zero-Config)
 	rateSvc := service.NewRateService()
 
-	analyticsSvc, err := service.NewAnalyticsService(dataDir)
-	if err != nil {
-		log.Printf("Warning: AnalyticsService initialization failed: %v", err)
-	}
-	if analyticsSvc != nil {
-		defer analyticsSvc.Close()
-	}
+	// 3. Clean Shutdown Handler
+	// Ensure DuckDB file locks are released on SIGINT/SIGTERM if any were held
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		// Since we moved to a JIT (Just-In-Time) pattern in the MCP server,
+		// the lock is typically only held for a few seconds during tool execution.
+		os.Exit(0)
+	}()
 
 	memorySvc := service.NewMemoryService(sqldb)
 
-	// 3. Smart TTY Routing (Separate Human and AI interfaces)
+	// 4. Smart TTY Routing (Separate Human and AI interfaces)
 	if flag.NArg() == 0 {
 		// If Stdin is a Terminal (Human), show help/error
 		if isTerminal(os.Stdin) {
@@ -73,7 +78,7 @@ func main() {
 
 		// If Stdin is NOT a terminal (AI Agent Host), start MCP Server
 		log.SetOutput(os.Stderr) // Redirect logs to stderr for MCP JSON-RPC
-		s := mcp.NewServer(memorySvc, analyticsSvc, rateSvc)
+		s := mcp.NewServer(memorySvc, dataDir, rateSvc)
 		log.Printf("Echo MCP Server starting (DB: %s)...", *dbPath)
 		if err := mcp_server.ServeStdio(s); err != nil {
 			log.Fatalf("MCP Server error: %v", err)
@@ -81,11 +86,16 @@ func main() {
 		return
 	}
 
-	// 4. Dispatch to CLI Subcommands (Human-facing)
+	// 5. Dispatch to CLI Subcommands (Human-facing)
 	command := flag.Arg(0)
 	switch command {
 	case "store", "recall", "search", "delete", "maintain", "help":
 		// CLI Dispatcher (Human interface)
+		// Note: CLI still uses the eager pattern for now if analytics sync is requested via maintain --sync.
+		analyticsSvc, _ := service.NewAnalyticsService(dataDir)
+		if analyticsSvc != nil {
+			defer analyticsSvc.Close()
+		}
 		dispatcher := cli.NewDispatcher(memorySvc, analyticsSvc, rateSvc, *outputFormat)
 		if err := dispatcher.Run(flag.Args()); err != nil {
 			os.Exit(1)

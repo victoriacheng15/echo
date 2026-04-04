@@ -27,10 +27,9 @@ func TestNewServer(t *testing.T) {
 	dataDir := "test_data_mcp"
 	defer os.RemoveAll(dataDir)
 
-	analyticsSvc, _ := service.NewAnalyticsService(dataDir)
 	rateSvc := &service.RateService{Card: service.RateCard{ComputeCADPerMs: 0.0001}}
 	svc := service.NewMemoryService(sqldb)
-	s := NewServer(svc, analyticsSvc, rateSvc)
+	s := NewServer(svc, dataDir, rateSvc)
 
 	t.Run("VerifyToolMetadata", func(t *testing.T) {
 		toolNames := []string{
