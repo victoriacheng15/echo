@@ -13,7 +13,7 @@ import (
 )
 
 // NewServer creates and configures a new Echo MCP Server.
-func NewServer(memorySvc *service.MemoryService, analyticsSvc *service.AnalyticsService, rateSvc *service.RateService) *server.MCPServer {
+func NewServer(memorySvc *service.MemoryService, dataDir string, rateSvc *service.RateService) *server.MCPServer {
 	// Create MCP Server
 	s := server.NewMCPServer(
 		"Echo",
@@ -30,8 +30,8 @@ func NewServer(memorySvc *service.MemoryService, analyticsSvc *service.Analytics
 	registerUpdateMemoryTool(s, memorySvc)                    // Update (Surgical)
 	registerDeletionTools(s, memorySvc)                       // Delete
 
-	// Register Analytical Tools (Phase 6.5)
-	registerGetAnalyticsTool(s, analyticsSvc, rateSvc)
+	// Register Analytical Tools
+	registerGetAnalyticsTool(s, dataDir, rateSvc)
 
 	return s
 }
@@ -243,15 +243,22 @@ func registerDeletionTools(s *server.MCPServer, svc *service.MemoryService) {
 // registerGetAnalyticsTool registers the 'get_analytics' tool.
 // Inputs:
 // - context_key (string, optional): Filter by context.
-func registerGetAnalyticsTool(s *server.MCPServer, svc *service.AnalyticsService, rateSvc *service.RateService) {
+func registerGetAnalyticsTool(s *server.MCPServer, dataDir string, rateSvc *service.RateService) {
 	tool := mcp.NewTool("get_analytics",
 		mcp.WithDescription("Retrieves analytical insights including context ROI, unit economics (FinOps), and environmental impact (GreenOps)."),
 		mcp.WithString("context_key", mcp.Description("Optional filter by context_key (e.g., 'project:echo').")),
 	)
 
 	s.AddTool(tool, func(ctx context.Context, request mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		if svc == nil || rateSvc == nil {
-			return mcp.NewToolResultError("Analytics engine is unavailable. Ensure DuckDB is installed and configs/rates.yml is present."), nil
+		// Just-In-Time Initialization: Open DuckDB only when needed
+		svc, err := service.NewAnalyticsService(dataDir)
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Analytics engine is currently locked or unavailable: %v", err)), nil
+		}
+		defer svc.Close() // Ensure the lock is released immediately after this tool call
+
+		if rateSvc == nil {
+			return mcp.NewToolResultError("Rate service is unavailable."), nil
 		}
 
 		// Sync events before querying to ensure up-to-date data
