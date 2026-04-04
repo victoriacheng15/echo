@@ -8,6 +8,10 @@ By bridging the gap between stateless AI reasoning and local persistence, Echo a
 
 📚 [Documentation Hub: Architecture, ADRs & Operations](./docs/README.md)
 
+🎥 **MCP Server Demo (Approx. 4 minutes):** [Watch on YouTube](https://youtu.be/teT9FgH5s4I)
+
+🎥 **Terminal CLI Demo (Less than 1 minutes):** [Watch on YouTube](https://youtu.be/R9kg8Toc9no)
+
 ---
 
 ## 📚 Project Evolution
