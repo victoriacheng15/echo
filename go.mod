@@ -4,7 +4,7 @@ go 1.25.2
 
 require (
 	github.com/duckdb/duckdb-go/v2 v2.10502.0
-	github.com/mark3labs/mcp-go v0.47.1
+	github.com/mark3labs/mcp-go v0.48.0
 	github.com/mattn/go-sqlite3 v1.14.42
 	gopkg.in/yaml.v2 v2.4.0
 )
