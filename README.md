@@ -1,118 +1,40 @@
 # Echo
 
-## What is this?
+Echo is a local persistent memory system for AI agents and developers, built in Go with SQLite, FTS5, DuckDB, and the Model Context Protocol. It gives stateless LLM sessions a durable memory layer that can be queried by an AI host over MCP or managed directly from a terminal.
 
-Echo is a local persistent memory system for AI agents and developers.
+The project focuses on fast local recall, explicit memory governance, and safe human-in-the-loop maintenance. Memories are stored locally, scoped by context, indexed for keyword search, and exposed through both a JSON-RPC MCP server and a CLI.
 
-It solves a key problem with LLMs:
-- they forget everything between sessions
-
-Echo adds a “long-term memory layer” so both:
-- AI agents (via MCP)
-- humans (via CLI)
-
-can store, search, and reuse knowledge across sessions.
-
-🌐 [Project Portal](https://victoriacheng15.github.io/echo/)  
-📚 [Full Documentation](./docs/README.md)
+[Project Portal](https://victoriacheng15.github.io/echo/) | [Full Documentation](./docs/README.md)
 
 ---
 
-## 🎥 Demo
+## Highlights
 
-- MCP Server (AI Agent Interface): https://youtu.be/teT9FgH5s4I  
-- CLI Interface (Human Usage): https://youtu.be/R9kg8Toc9no  
-
----
-
-## 🔍 What I Built (Quick Proof)
-
-- Persistent memory layer using SQLite (local database)
-- Dual interface:
-  - MCP server for AI agents
-  - CLI tool for human interaction
-- Fast keyword search using FTS5 indexing
-- Context-aware memory (project-specific + global scope)
-- Analytics layer using DuckDB
-- Reproducible environment using Nix
-- Strong validation using JSON schemas
-- High-performance design (sub-millisecond queries)
-- Fully local and privacy-first (no external services)
+| Area | What it demonstrates |
+| :--- | :--- |
+| Persistent memory | SQLite stores durable memories with context keys, entry types, tags, source attribution, and reinforcement through UPSERTs. |
+| AI integration | The MCP server exposes store, recall, search, update, deletion, and analytics tools for agent workflows. |
+| Human control | The CLI supports store, recall, search, delete, maintenance, and table, JSON, or CSV output formats. |
+| Search performance | SQLite FTS5 indexes memory content for keyword search, with a short-query fallback for substring matching. |
+| Safety | Destructive operations use an ID-based retrieve, confirm, act flow to avoid accidental deletion by ambiguous content. |
+| Analytics | Telemetry can be written to JSONL and synchronized into DuckDB for context-level usage, cost, hit-rate, and carbon estimates. |
 
 ---
 
-## 📦 Platform Projects
+## Architecture
 
-This system is built as a collection of smaller systems:
+Echo uses a dual-interface architecture. The CLI and MCP transport layer share the same service and persistence code, so AI-driven and human-driven workflows operate on the same local data model.
 
-1. **Persistent Memory Engine**
-   - SQLite-based storage with WAL for reliability
-
-2. **AI Agent Interface (MCP Server)**
-   - JSON-RPC interface for AI tool integration
-
-3. **CLI Interface**
-   - Command-line tool for storing and querying memory
-
-4. **Search Engine**
-   - FTS5 full-text indexing for fast lookup
-
-5. **Context Management System**
-   - Project-based and global memory separation
-
-6. **Analytics Engine**
-   - DuckDB for usage insights and memory optimization
-
-7. **Validation Layer**
-   - Schema-based validation for memory entries
-
-8. **Reproducible Environment**
-   - Nix-based setup for consistent builds
-
-9. **Documentation Engine**
-   - Static generator for architecture and ADRs
-
-10. **Performance Optimization**
-   - Designed for low-latency AI interaction loops
-
----
-
-## 🧠 Problems I Solved
-
-- LLMs lose context → added persistent memory layer
-- Slow retrieval → optimized search with FTS5 indexing
-- Memory collisions → introduced structured IDs and contexts
-- Lack of control → added CLI for manual memory management
-- External dependency risk → built fully local system
-- Hard to analyze usage → added DuckDB analytics layer
-
----
-
-## 🛠️ Tech Stack
-
-**Core**
-- Go
-- SQLite (WAL mode)
-- FTS5 (full-text search)
-
-**Analytics**
-- DuckDB
-
-**Dev Environment**
-- Nix
-
-**Interfaces**
-- MCP (JSON-RPC)
-- CLI
-
----
-
-## 🏗️ System Architecture
+| Path | Use case | Flow |
+| :--- | :--- | :--- |
+| MCP path | AI agent stores or retrieves memory | Agent host -> JSON-RPC over stdio -> MCP tools -> service layer -> SQLite and FTS5 |
+| CLI path | Human reviews or curates memory | Terminal command -> CLI dispatcher -> service layer -> SQLite and FTS5 |
+| Analytics path | Usage analysis and memory tuning | Telemetry JSONL -> DuckDB sync -> context-level analytics |
 
 ```mermaid
 graph TD
     subgraph "Interfaces"
-        A[AI Agent] -- "JSON-RPC" --> B[MCP Layer]
+        A[AI Agent or IDE] -- "JSON-RPC over stdio" --> B[MCP Transport]
         H[Terminal] -- "CLI Commands" --> I[CLI Dispatcher]
     end
 
@@ -122,60 +44,65 @@ graph TD
         C --> D{Storage Engine}
     end
 
-    subgraph "Persistence & Analytics"
-        D --> E[(SQLite)]
-        D --> F[(FTS5 Index)]
-        D --> G[(DuckDB)]
+    subgraph "Persistence and Analytics"
+        D --> E[(SQLite Memories)]
+        D --> F[(FTS5 Search Index)]
+        D --> G[(DuckDB Analytics)]
     end
 ```
 
 ---
 
-## 🔎 Example: Memory Flow
+## Tech Stack
 
-### Store Memory
-- User or AI sends content
-- System validates input
-- Memory stored in SQLite
-
-### Recall Memory
-- Query executed using FTS5 index
-- Relevant results returned instantly
-
----
-
-## ⚠️ Challenges
-
-I anticipated search performance issues as the dataset grows.
-
-I wrote benchmarks simulating ~1,000 records and found linear scans would not scale well.
-
-I implemented SQLite FTS5 indexing to ensure efficient search performance.
+| Layer | Tools |
+| :--- | :--- |
+| Language | Go |
+| Data stores | SQLite, FTS5, DuckDB, JSONL telemetry log |
+| Observability | Memory telemetry events, DuckDB analytics views, benchmark suite |
+| Testing | Go `testing` package, table-driven tests |
+| CI/CD | GitHub Actions |
 
 ---
 
-## 🚀 Getting Started
+## Documentation
 
-<details>
-<summary><b>Setup</b></summary>
+- [Full Documentation](./docs/README.md)
+- [Architecture](./docs/architecture.md)
+- [Decision Records](./docs/decisions/README.md)
+
+---
+
+## Demos
+
+- [MCP Server: AI Agent Interface](https://youtu.be/teT9FgH5s4I)
+- [CLI Interface: Human Usage](https://youtu.be/R9kg8Toc9no)
+
+---
+
+## Local Setup
+
+Build and verify the project:
 
 ```bash
 make build
+make test
+make bench
+```
+
+Install the CLI:
+
+```bash
 make install
 ```
 
-</details>
+Use the CLI directly:
 
----
+```bash
+echo-cli store -content "Use FTS5 for memory search." -context project:echo -type directive -tags search,sqlite
+echo-cli recall -contexts global,project:echo -limit 10
+echo-cli search -query FTS5
+echo-cli maintain -rebuild
+```
 
-## 📌 Summary
-
-This project demonstrates how to build a persistent memory system for AI using:
-
-- local-first architecture (SQLite)
-- fast search indexing (FTS5)
-- dual interfaces (MCP + CLI)
-- analytics with DuckDB
-- reproducible environments (Nix)
-
-It shows how to extend stateless AI systems with long-term memory and structured context.
+Run the binary as an MCP server by launching it from an MCP host with stdin connected to the JSON-RPC transport. When no CLI subcommand is provided and stdin is not a terminal, Echo starts the MCP server automatically.
