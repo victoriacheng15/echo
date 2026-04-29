@@ -1,6 +1,6 @@
 module echo
 
-go 1.25.2
+go 1.25
 
 require (
 	github.com/duckdb/duckdb-go/v2 v2.10502.0

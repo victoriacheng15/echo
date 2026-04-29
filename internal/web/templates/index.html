@@ -29,11 +29,11 @@
     <section class="flex flex-col items-center w-full">
         <div class="flex flex-col gap-y-12 w-full">
             <h3 class="title-primary text-center">{{ .Landing.WhatIsEcho.Title }}</h3>
-            <div class="flex flex-col gap-y-6 text-lg text-gray-300 text-center">
+            <ul class="list-disc list-inside flex flex-col gap-y-3 text-lg ml-2 sm:ml-8 md:ml-16">
                 {{ range .Landing.WhatIsEcho.Content }}
-                <p>{{ . }}</p>
+                <li>{{ . }}</li>
                 {{ end }}
-            </div>
+            </ul>
         </div>
     </section>
 

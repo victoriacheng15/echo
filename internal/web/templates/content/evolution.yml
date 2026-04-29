@@ -1,5 +1,5 @@
-page_title: "Project Evolution"
-intro_text: "Tracking the architectural milestones and strategic pivots that define Echo’s journey toward persistent memory for AI agents."
+page_title: "Echo Evolution"
+intro_text: "A timeline of the architecture decisions that shaped Echo’s local memory, retrieval, analytics, and agent interfaces."
 chapters:
   - title: "Project Launch: Persistent Memory"
     intro: "Defining the core foundation of the project by building a resilient 'Long-Term Memory' from day one."
@@ -13,7 +13,7 @@ chapters:
           - Launched with a 'Local-First' persistence layer, ensuring AI agents retain critical context across sessions.
           - Utilized SQLite WAL to enable simultaneous data access and maintain a reliable state without data corruption.
   - title: "Optimization & Retrieval"
-    intro: "Achieving sub-10ms knowledge retrieval to support real-time agent decision-making."
+    intro: "Optimizing retrieval for fast local context lookup."
     timeline:
       - date: "2026-02-28"
         title: "Optimization: Hybrid Search Engine"
@@ -22,7 +22,7 @@ chapters:
             url: "docs/decisions/002-fts5-search.md"
         description: |
           - Delivered a '230x speedup' with sub-10ms retrieval, ensuring agents find relevant information as the knowledge base grows.
-          - Reduced system overhead, allowing the application to run efficiently on low-resource edge devices.
+          - Reduced system overhead for local execution as the knowledge base grows.
   - title: "Project Workflow & Iteration"
     intro: "Building a living project through AI-human collaboration and real-time documentation."
     timeline:
@@ -40,7 +40,7 @@ chapters:
             url: "docs/decisions/003-duckdb-analytics.md"
         description: |
           - Proposed a high-fidelity telemetry system to track 'Cost-per-Project' and 'Carbon Footprint' using an embedded DuckDB OLAP layer.
-          - Designed an autonomous 'Analytical Feedback Loop' to decay low-value context, aiming to optimize the AI 'Brain' for high-signal interactions.
+          - Designed an analytical feedback loop to identify low-value context and support high-signal memory refinement.
       - date: "2026-03-07"
         title: "Implementation: DuckDB Analytical Bridge"
         artifacts:
@@ -48,12 +48,12 @@ chapters:
             url: "docs/decisions/003-duckdb-analytics.md"
         description: |
           - Implemented the DuckDB-optimized Data Bridge to ingest high-fidelity JSONL telemetry, enabling sub-millisecond OLAP querying of system economics.
-          - Engineered the autonomous 'Knowledge Refiner' to automatically decay and deactivate low-signal memories based on real-world hit rates.
+          - Engineered the Knowledge Refiner service to decay and deactivate low-signal memories based on measured hit rates.
       - date: "2026-03-08"
         title: "Observability: get_analytics Tooling"
         description: |
-          - Exposed the DuckDB analytical engine via MCP, providing AI agents with real-time 'Self-Awareness' of their resource impact and context utility.
-          - Completed the 'FinOps Feedback Loop' by enabling agents to query their own cost-per-feature and carbon footprint metrics directly.
+          - Exposed the DuckDB analytical engine through the MCP get_analytics tool, giving AI agents on-demand visibility into resource impact and context utility.
+          - Completed the MCP-facing FinOps feedback loop by enabling agents to query cost-per-feature and carbon footprint metrics directly.
   - title: "Memory Precision & Data Integrity"
     intro: "Hardening the memory lifecycle against accidental data loss through deterministic surrogate ID targeting."
     timeline:
@@ -63,8 +63,8 @@ chapters:
           - name: "ADR 004: ID-Based Deletion"
             url: "docs/decisions/004-id-based-deletion.md"
         description: |
-          - Eliminated critical 'Content Collision' failure modes by transitioning from natural keys to unique surrogate IDs, ensuring absolute precision in destructive operations.
-          - Prevented 'Accidental Mass-Deletion' by ensuring the AI agent can only target a specific, unique record even when identical content exists across different project contexts.
+          - Eliminated content-collision failure modes by transitioning from natural keys to unique surrogate IDs for destructive operations.
+          - Prevented accidental broad deletion by ensuring the AI agent can only target a specific record, even when identical content exists across contexts.
   - title: "User Options & Interface Expansion"
     intro: "Providing users with the choice between AI-driven MCP interactions and terminal-based human curation."
     timeline:
