@@ -4,7 +4,7 @@ go 1.25.5
 
 require (
 	github.com/duckdb/duckdb-go/v2 v2.10502.0
-	github.com/mark3labs/mcp-go v0.52.0
+	github.com/mark3labs/mcp-go v0.54.0
 	github.com/mattn/go-sqlite3 v1.14.44
 	gopkg.in/yaml.v2 v2.4.0
 )
@@ -37,5 +37,4 @@ require (
 	golang.org/x/text v0.33.0 // indirect
 	golang.org/x/tools v0.41.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
-	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
 )
