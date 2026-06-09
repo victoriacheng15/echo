@@ -1,10 +1,10 @@
+# ==============================================================================
+# Setup & Metadata
+# ==============================================================================
+
 BINARY_NAME=echo-cli
 BUILD_DIR=bin
-LINT_IMAGE=ghcr.io/igorshubovych/markdownlint-cli:v0.44.0
 GO_TAGS=-tags "sqlite_fts5"
-
-# Container Engine (Default to Podman)
-DOCKER ?= podman
 
 # Dynamic Nix Detection
 # 1. Check if nix-shell is available
@@ -29,7 +29,7 @@ endif
 PREFIX ?= /usr/local
 BIN_DIR = $(PREFIX)/bin
 
-.PHONY: all help update vet format test test-cov bench build build-web setup-tailwind clean install uninstall lint
+.PHONY: all help update format md-lint md-format vet test cov bench build web-build setup-tailwind install uninstall clean
 
 # Default target: Run the full development lifecycle
 all: update format vet test build
@@ -44,48 +44,48 @@ help:
 	@echo "  update           - Run go mod tidy"
 	@echo "  vet              - Run go vet"
 	@echo "  format           - Run go fmt"
-	@echo "  lint             - Run markdownlint via Docker"
+	@echo "  md-lint          - Run markdownlint via npx"
+	@echo "  md-format        - Format markdown files via npx"
 	@echo "  test             - Run tests"
-	@echo "  test-cov         - Run tests with coverage and open HTML report"
+	@echo "  cov              - Run tests with coverage"
 	@echo "  bench            - Run benchmarks"
 	@echo "  build            - Build the binary under bin/"
-	@echo "  build-web        - Build the static web application site into dist/"
+	@echo "  web-build        - Build the static web application site into dist/"
 	@echo "  setup-tailwind   - Download the tailwind css cli"
 	@echo "  install          - Install the binary to $(BIN_DIR)"
 	@echo "  uninstall        - Remove the binary from $(BIN_DIR)"
 	@echo "  clean            - Remove build artifacts"
 
-# Run markdownlint via Docker
-lint:
-	$(DOCKER) run --rm -v "$(PWD):/data:Z" -w /data $(LINT_IMAGE) --fix "**/*.md"
-
-# Install the binary to the system
-install: build
-	@echo "Updating $(BINARY_NAME)..."
-	mkdir -p $(BIN_DIR)
-	sudo install -m 755 $(BUILD_DIR)/$(BINARY_NAME) $(BIN_DIR)/$(BINARY_NAME)
-	rm $(BUILD_DIR)/$(BINARY_NAME)
-	@echo "Echo updated in $(BIN_DIR)"
-
-# Remove the binary from the system
-uninstall:
-	rm -f $(BIN_DIR)/$(BINARY_NAME)
-	@echo "Echo removed from $(BIN_DIR)"
+# ==============================================================================
+# Development & Quality Assurance
+# ==============================================================================
 
 # Run go mod tidy to update dependencies
 update:
 	echo "Updating dependencies..." && \
 	go mod tidy
 
+# Run go fmt on all packages
+format:
+	echo "Running go fmt..." && \
+	go fmt ./...
+
 # Run go vet on all packages
 vet:
 	echo "Running go vet..." && \
 	go vet $(GO_TAGS) ./...
 
-# Run go fmt on all packages
-format:
-	echo "Running go fmt..." && \
-	go fmt ./...
+# Run markdownlint via npx
+md-lint:
+	npx markdownlint-cli "**/*.md"
+
+# Format markdown files via npx
+md-format:
+	npx markdownlint-cli --fix "**/*.md"
+
+# ==============================================================================
+# Testing & Benchmarking
+# ==============================================================================
 
 # Run tests for all packages
 test:
@@ -93,7 +93,7 @@ test:
 	go test $(GO_TAGS) ./...
 
 # Run tests with coverage
-test-cov:
+cov:
 	echo "Running tests with coverage..." && \
 	go test $(GO_TAGS) -coverprofile=coverage.out ./... && \
 	go tool cover -func=coverage.out && \
@@ -103,6 +103,10 @@ test-cov:
 bench:
 	echo "Running benchmarks..." && \
 	go test $(GO_TAGS) -bench=. -benchmem ./...
+
+# ==============================================================================
+# Build & Packaging
+# ==============================================================================
 
 # Build the binary under bin/
 build:
@@ -126,6 +130,27 @@ setup-tailwind:
 	echo "Downloading tailwind css cli..." && \
 	curl -sL https://github.com/tailwindlabs/tailwindcss/releases/latest/download/tailwindcss-linux-x64 -o tailwindcss && \
 	chmod +x tailwindcss
+
+# ==============================================================================
+# System Installation
+# ==============================================================================
+
+# Install the binary to the system
+install: build
+	@echo "Updating $(BINARY_NAME)..."
+	mkdir -p $(BIN_DIR)
+	sudo install -m 755 $(BUILD_DIR)/$(BINARY_NAME) $(BIN_DIR)/$(BINARY_NAME)
+	rm $(BUILD_DIR)/$(BINARY_NAME)
+	@echo "Echo updated in $(BIN_DIR)"
+
+# Remove the binary from the system
+uninstall:
+	rm -f $(BIN_DIR)/$(BINARY_NAME)
+	@echo "Echo removed from $(BIN_DIR)"
+
+# ==============================================================================
+# Maintenance
+# ==============================================================================
 
 # Remove build artifacts
 clean:
