@@ -1,4 +1,4 @@
-page_title: "Echo Evolution"
+page_title: "Evolution"
 intro_text: "A timeline of the architecture decisions that shaped Echo’s local memory, retrieval, analytics, and agent interfaces."
 chapters:
   - title: "Project Launch: Persistent Memory"

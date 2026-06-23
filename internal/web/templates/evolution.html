@@ -3,11 +3,11 @@
 {{ end }}
 
 {{ define "header" }}
-<div class="flex flex-col gap-y-4 text-center">
+<section class="flex flex-col gap-y-4 text-center">
     <h2 class="title-primary">{{ .Evolution.PageTitle }}</h2>
     <p class="text-xl text-gray-400 italic">{{ .Evolution.IntroText }}</p>
-</div>
-<div class="border-b border-gray-800 w-full mt-16"></div>
+</section>
+<section class="border-b border-gray-800 w-full mt-16"></section>
 {{ end }}
 
 {{ define "content" }}
@@ -19,29 +19,29 @@
         {{ if eq $index 0 }}open{{ end }}>
         <summary
             class="flex items-center justify-between p-6 cursor-pointer list-none hover:bg-gray-800/50 transition-colors duration-300">
-            <div class="flex flex-col gap-y-2">
+            <hgroup class="flex flex-col gap-y-2">
                 <h3 class="title-secondary group-open:text-blue-300">
                     Chapter {{ sub $totalChapters $index }}: {{ .Title }}
                 </h3>
                 <p class="text-lg text-gray-400 italic">{{ .Intro }}</p>
-            </div>
-            <div class="text-blue-400 transition-transform duration-300 group-open:rotate-180">
+            </hgroup>
+            <span class="text-blue-400 transition-transform duration-300 group-open:rotate-180">
                 <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"></path>
                 </svg>
-            </div>
+            </span>
         </summary>
 
-        <div class="p-6 md:p-8 flex flex-col gap-y-12 border-t border-gray-800 ml-4 md:ml-8 border-l-2 pl-8 my-4">
+        <section class="p-6 md:p-8 flex flex-col gap-y-12 border-t border-gray-800 ml-4 md:ml-8 border-l-2 pl-8 my-4">
             {{ range .Timeline }}
-            <div class="relative flex flex-col gap-y-4">
+            <article class="relative flex flex-col gap-y-4">
                 <!-- Timeline Dot -->
-                <div class="absolute -left-[41px] top-2 w-4 h-4 rounded-full bg-blue-600 border-4 border-gray-900"></div>
+                <span class="absolute -left-[41px] top-2 w-4 h-4 rounded-full bg-blue-600 border-4 border-gray-900"></span>
 
-                <div class="flex flex-col md:flex-row md:items-baseline gap-x-4 gap-y-1">
+                <header class="flex flex-col md:flex-row md:items-baseline gap-x-4 gap-y-1">
                     <span class="text-sm font-mono text-blue-500 font-bold uppercase tracking-widest">{{ .Date }}</span>
                     <h4 class="title-tertiary">{{ .Title }}</h4>
-                </div>
+                </header>
 
                 <ul class="list-disc list-inside flex flex-col gap-y-2 text-lg text-gray-300">
                     {{ range .Points }}
@@ -49,7 +49,7 @@
                     {{ end }}
                 </ul>
                 {{ if .Artifacts }}
-                <div class="flex flex-wrap gap-4 mt-2">
+                <nav class="flex flex-wrap gap-4 mt-2" aria-label="Artifact links">
                     {{ range .Artifacts }}
                     <a href="https://github.com/victoriacheng15/echo/blob/main/{{ .Url }}"
                         class="text-sm bg-gray-800 hover:bg-gray-700 text-blue-400 px-3 py-1 rounded-full border border-gray-700 transition duration-300 flex items-center gap-x-2" target="_blank" rel="noopener noreferrer">
@@ -60,11 +60,11 @@
                         {{ .Name }}
                     </a>
                     {{ end }}
-                </div>
+                </nav>
                 {{ end }}
-            </div>
+            </article>
             {{ end }}
-        </div>
+        </section>
     </details>
     {{ end }}
 </main>
