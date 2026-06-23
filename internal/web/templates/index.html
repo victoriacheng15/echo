@@ -4,68 +4,103 @@
 
 {{ define "header" }}
 <!-- Hero Section -->
-<section class="flex flex-col items-center gap-y-8 text-center w-full">
-    <div class="flex flex-col gap-y-4">
-        <h2 class="title-primary">{{ .Landing.Hero.Headline }}</h2>
-        <p class="text-xl text-gray-400">{{ .Landing.Hero.SubHeadline }}</p>
-    </div>
-    <p class="text-lg text-gray-300">{{ .Landing.Hero.BriefDescription }}</p>
-    <div class="flex gap-x-4">
-        <a href="{{ .Landing.Hero.CtaLink }}"
-            class="bg-blue-600 text-gray-50 text-lg font-semibold px-8 py-3 rounded-lg shadow hover:bg-blue-700 transition duration-300" target="_blank" rel="noopener noreferrer">
-            {{ .Landing.Hero.CtaText }}
+<section class="flex flex-col items-start gap-y-8 text-left w-full">
+    <p class="text-lg text-gray-300 max-w-2xl leading-relaxed">{{ .Landing.LLMS.Objective }}</p>
+    <nav class="flex gap-x-4" aria-label="Hero actions">
+        <a href="{{ .Landing.Footer.GithubLink }}/echo"
+            class="bg-blue-600 text-gray-50 text-lg font-semibold px-8 py-3 rounded-lg shadow-lg hover:bg-blue-700 hover:shadow-blue-500/20 hover:-translate-y-0.5 transition duration-300" target="_blank" rel="noopener noreferrer">
+            Explore on GitHub
         </a>
-        <a href="{{ .Landing.Hero.SecondaryCtaLink }}"
-            class="bg-transparent border border-gray-700 text-gray-50 text-lg font-semibold px-8 py-3 rounded-lg hover:bg-gray-800 transition duration-300">
-            {{ .Landing.Hero.SecondaryCtaText }}
+        <a href="evolution.html"
+            class="bg-transparent border border-gray-700 text-gray-50 text-lg font-semibold px-8 py-3 rounded-lg hover:bg-gray-800 hover:-translate-y-0.5 transition duration-300">
+            See Evolution
         </a>
-    </div>
+    </nav>
 </section>
 {{ end }}
 
 {{ define "content" }}
 <main class="my-10 flex flex-col gap-y-20">
-    <!-- What is Echo? Section -->
-    <section class="flex flex-col items-center w-full">
-        <div class="flex flex-col gap-y-12 w-full">
-            <h3 class="title-primary text-center">{{ .Landing.WhatIsEcho.Title }}</h3>
-            <ul class="list-disc list-inside flex flex-col gap-y-3 text-lg ml-2 sm:ml-8 md:ml-16">
-                {{ range .Landing.WhatIsEcho.Content }}
-                <li>{{ . }}</li>
-                {{ end }}
-            </ul>
-        </div>
+    <!-- Architecture Blueprint Section -->
+    <section class="flex flex-col items-start w-full">
+        <section class="flex flex-col gap-y-6 w-full">
+            <h3 class="title-secondary text-left">Architecture</h3>
+            <figure class="w-full bg-gray-950 p-6 rounded-xl border border-gray-800 shadow-inner overflow-x-auto">
+                <pre class="font-mono text-xs sm:text-sm text-blue-400 leading-relaxed">{{ .Landing.Architecture.DiagramASCII }}</pre>
+                <figcaption class="sr-only">ASCII diagram showing the high-level data flow and architecture of Echo</figcaption>
+            </figure>
+        </section>
     </section>
 
-    <!-- Key Features Section -->
-    <section class="flex flex-col items-center w-full">
-        <div class="flex flex-col gap-y-12 w-full">
-            <h3 class="title-primary text-center">{{ .Landing.KeyFeatures.Title }}</h3>
-            <div class="grid md:grid-cols-2 gap-8">
-                {{ range .Landing.KeyFeatures.Features }}
-                <div
-                    class="bg-gray-800 p-6 rounded-lg shadow-md flex flex-col items-center gap-y-4 text-center border border-gray-700">
-                    <div class="text-5xl text-blue-500">{{ .Icon }}</div>
-                    <div class="flex flex-col gap-y-2">
-                        <h4 class="title-tertiary">{{ .Name }}</h4>
-                        <p class="text-gray-400">{{ .Description }}</p>
-                    </div>
-                </div>
+    <!-- Core Components & Logic Section -->
+    <section class="flex flex-col items-start w-full">
+        <section class="flex flex-col gap-y-8 w-full">
+            <h3 class="title-secondary text-left">Core Components & Logic</h3>
+            <section class="flex flex-col gap-y-6 w-full">
+                {{ range .Landing.Tech }}
+                <article class="bg-gray-800/40 hover:bg-gray-800/70 p-6 rounded-xl border border-gray-800 hover:border-gray-700 transition duration-300 flex flex-col gap-y-2">
+                    <h4 class="title-tertiary text-blue-300">{{ .Title }}</h4>
+                    <p class="text-gray-400 text-sm leading-relaxed">{{ .Description }}</p>
+                </article>
                 {{ end }}
-            </div>
-        </div>
+            </section>
+        </section>
     </section>
 
-    <!-- Why it Matters Section -->
-    <section class="text-gray-50 flex flex-col items-center w-full">
-        <div class="flex flex-col gap-y-12 w-full">
-            <h3 class="title-primary text-center">{{ .Landing.WhyItMatters.Title }}</h3>
-            <ul class="list-disc list-inside flex flex-col gap-y-3 text-lg ml-2 sm:ml-8 md:ml-16">
-                {{ range .Landing.WhyItMatters.Points }}
-                <li>{{ . }}</li>
+    <!-- Validation & Resiliency Testing Section -->
+    <section class="flex flex-col items-start w-full">
+        <section class="flex flex-col gap-y-8 w-full">
+            <h3 class="title-secondary text-left">Validation & Resiliency Testing</h3>
+            <section class="flex flex-col gap-y-6 w-full">
+                {{ range .Landing.Proof }}
+                <article class="bg-gray-800/40 p-6 rounded-xl border border-gray-800 flex flex-col gap-y-2">
+                    <h4 class="title-tertiary text-gray-200">{{ .Title }}</h4>
+                    <p class="text-gray-400 text-sm leading-relaxed">{{ .Description }}</p>
+                </article>
                 {{ end }}
-            </ul>
-        </div>
+            </section>
+        </section>
+    </section>
+
+    <!-- Reach Section (Design Trade-offs & Verification Logs) -->
+    <section class="flex flex-col items-start w-full gap-y-12">
+        <h3 class="title-secondary text-left">Reach</h3>
+        
+        <!-- Humble Pivots Sub-section -->
+        <section class="flex flex-col gap-y-4 w-full">
+            <h4 class="title-tertiary text-left text-blue-300">Humble Pivots</h4>
+            <section class="flex flex-col gap-y-6 w-full">
+                {{ range .Landing.Reach.HumblePivots }}
+                <article class="bg-gray-800/40 p-6 rounded-xl border border-gray-800 flex flex-col gap-y-2">
+                    <h5 class="text-lg font-semibold text-yellow-200">{{ .Title }}</h5>
+                    <p class="text-gray-400 text-sm leading-relaxed">{{ .Description }}</p>
+                </article>
+                {{ end }}
+            </section>
+        </section>
+
+        <!-- Objective Clarity Sub-section -->
+        <section class="flex flex-col gap-y-4 w-full">
+            <h4 class="title-tertiary text-left text-blue-300">Objective Clarity</h4>
+            <p class="bg-gray-800/40 p-6 rounded-xl border border-gray-800 w-full text-left text-gray-300 text-lg leading-relaxed">
+                {{ .Landing.Reach.ObjectiveClarity.Description }}
+            </p>
+        </section>
+
+        <!-- Verifiable Outputs Sub-section -->
+        <section class="flex flex-col gap-y-4 w-full">
+            <h4 class="title-tertiary text-left text-blue-300">Verifiable Outputs</h4>
+            <section class="flex flex-col gap-y-6 w-full">
+                {{ range .Landing.Reach.VerifiableOutputs }}
+                <article class="flex flex-col gap-y-2 w-full">
+                    <span class="text-sm font-semibold text-gray-400 pl-1">{{ .Title }}</span>
+                    <figure class="bg-gray-950 p-4 rounded-xl border border-gray-800 shadow-inner overflow-x-auto">
+                        <pre class="font-mono text-xs text-green-400/90 leading-tight">{{ .TerminalOutput }}</pre>
+                    </figure>
+                </article>
+                {{ end }}
+            </section>
+        </section>
     </section>
 </main>
 {{ end }}

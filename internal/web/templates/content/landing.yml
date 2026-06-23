@@ -2,56 +2,130 @@ header:
   project_name: "Echo"
   site_url: "https://victoriacheng15.github.io/echo"
 
-system_specification:
+llms:
   objective: "Echo is a high-precision MCP (Model Context Protocol) server that provides AI agents with a deterministic memory layer, integrating FTS5-backed contextual retrieval with embedded DuckDB analytics for knowledge ROI and resource observability."
   stack: "Go (Golang), SQLite (FTS5/WAL), MCP (Model Context Protocol), JSON-RPC 2.0, DuckDB"
   pattern: "Dual-Interface (MCP/CLI)"
   entry_point: "cmd/echo/main.go"
   persistence_strategy: "Local SQLite with automated FTS5 synchronization"
   observability: "On-demand FinOps & GreenOps telemetry via embedded DuckDB"
-  machine_registry: "/api/evolution-registry.json"
 
-hero:
-  headline: "Persistent Memory for AI Agents"
-  sub_headline: "A local SQLite memory layer for MCP tools and terminal workflows."
-  brief_description: "Echo lets agents store, recall, search, and refine context across sessions while keeping memory inspectable from the CLI."
-  cta_text: "Explore on GitHub"
-  cta_link: "https://github.com/victoriacheng15/echo"
-  secondary_cta_text: "See Evolution"
-  secondary_cta_link: "evolution.html"
+# Architecture Blueprint
+architecture:
+  diagram_ascii: |
+    [AI Agent / IDE]             [Human / Terminal]
+           │                             │
+    (JSON-RPC 2.0 via STDIO)          (Flag Commands)
+           ▼                             ▼
+    ┌──────────────────────┐      ┌──────────────────────┐
+    │ MCP Transport Layer  │      │    CLI Dispatcher    │
+    └──────────┬───────────┘      └──────────┬───────────┘
+               │                             │
+         (Strong Types)                (Shared State)
+               │                             │
+               └─────────────┬───────────────┘
+                             ▼
+                ┌─────────────────────────┐
+                │  Shared Service Layer   │
+                └────────────┬────────────┘
+                             │
+                       (Validation)
+                             ▼
+                    ┌─────────────────┐
+                    │ Storage Engine  │
+                    └────────┬────────┘
+                             │
+     ┌───────────────────────┼───────────────────────┐
+     ▼                       ▼                       ▼
+    (WAL Persistence)      (Full-Text Search)      (Telemetry)
+     ▼                       ▼                       ▼
+    ┌──────────────────┐   ┌──────────────────┐    ┌──────────────────┐
+    │  SQLite LTM DB   │   │ FTS5 Virtual Tab │    │ DuckDB Analytics │
+    └──────────────────┘   └──────────────────┘    └──────────────────┘
 
-what_is_echo:
-  title: "Memory Infrastructure for AI Agents"
-  content:
-    - "Echo provides an external long-term memory layer for AI agents, overcoming the limitations of stateless sessions."
-    - "Instead of relying on repeated prompts, memory tools retrieve stored context so agents can process requests without the developer re-typing project instructions."
-    - "It supports two primary interfaces: an automated MCP server for AI tool calls and a terminal CLI for direct human curation of the memory state."
-    - "The integrated DuckDB analytical engine tracks knowledge ROI and resource impact so memory usage can be reviewed, refined, and kept high-signal."
+# Core Components & Logic
+tech:
+  - title: "Interface & CLI Layer"
+    description: "Implements fat binary routing, Smart TTY detection, and CLI subcommands to expose shared memory states directly to terminal users."
+  - title: "MCP Transport Layer"
+    description: "Handles Model Context Protocol registrations and maps incoming JSON-RPC 2.0 messages onto typed service boundaries."
+  - title: "Memory Service"
+    description: "Orchestrates retrieval and maintenance logic, routing queries between basic scans and the FTS5 virtual table."
+  - title: "Persistence & Telemetry"
+    description: "Manages local SQLite WAL storage, automated FTS5 index updates, and DuckDB analytical query runners."
 
-key_features:
-  title: "Core Capabilities"
-  features:
-    - name: "Shared MCP & CLI Access"
-      description: "Agents and humans work with the same local memory state through MCP tools or terminal commands."
-      icon: "🔗"
-    - name: "Persistent Store & Recall"
-      description: "Save instructions, facts, and artifacts, then recall them by context with benchmarked sub-millisecond local retrieval."
-      icon: "🧠"
-    - name: "FTS5 Search & Curation"
-      description: "Find, update, and delete memories precisely with SQLite FTS5 search and ID-based governance."
-      icon: "🔍"
-    - name: "Usage Analytics"
-      description: "Use embedded DuckDB telemetry to review knowledge ROI, cost-efficiency, and environmental impact."
-      icon: "📊"
+# Validation & Resiliency Testing
+proof:
+  - title: "Reproducibility"
+    description: "Development environment bootstrapping using Nix (shell.nix) and reproducible project builds via Makefile automation."
+  - title: "Automated Verification"
+    description: "Continuous validation verified via local Go benchmarking suite (make bench) and standard unit testing."
+  - title: "Telemetry Pipeline"
+    description: "Granular cost, latency, and knowledge ROI tracking compiled automatically with the embedded DuckDB query runner."
 
-why_it_matters:
-  title: "Driving Smarter, More Capable AI"
-  points:
-    - "Enhanced Context: AI agents can retrieve relevant context across extended interactions."
-    - "Continuous Learning: Knowledge gained is persistent, improving agent performance over time."
-    - "Reliable Persistence: Leverages SQLite for persistent, local data storage."
-    - "Developer Experience: Simple JSON-RPC interface for easy integration into agent architectures."
-    - "Local Control: Memory stays inspectable, editable, and portable through shared MCP and CLI workflows."
+# Design Trade-offs & Verification Logs
+reach:
+  humble_pivots:
+    - title: "FTS5 Virtual Table for Search"
+      description: "Pivoted from basic SQL LIKE queries to SQLite FTS5 index for O(log n) keyword search performance on larger datasets."
+    - title: "ID-based Deletion Confirmation"
+      description: "Introduced surrogate ID confirmation workflows to prevent unintended mass-deletion of semantic context during agent updates."
+  objective_clarity:
+    description: "Deterministic, local memory server providing sub-millisecond context retrieval within standard resource budgets."
+  verifiable_outputs:
+    - title: "Go Memory Benchmarks"
+      terminal_output: |
+        goos: linux
+        goarch: amd64
+        pkg: echo/internal/service
+        cpu: Intel(R) Core(TM) i7-14650HX
+        BenchmarkRecallMemory-24      	    9771	    119078 ns/op	   11887 B/op	     251 allocs/op
+        BenchmarkSearchMemories-24    	    1708	    672182 ns/op	   98352 B/op	    1852 allocs/op
+        BenchmarkStoreMemory-24       	    8908	    148335 ns/op	     504 B/op	      14 allocs/op
+        BenchmarkDeleteMemory-24      	   12205	    109900 ns/op	     216 B/op	       7 allocs/op
+        PASS
+        ok  	echo/internal/service	10.967s
+    - title: "Unit Test Verification"
+      terminal_output: |
+        === RUN   TestGetDefaultDataDir
+        === RUN   TestGetDefaultDataDir/XDG_DATA_HOME_set
+        === RUN   TestGetDefaultDataDir/XDG_DATA_HOME_empty
+        --- PASS: TestGetDefaultDataDir (0.00s)
+        === RUN   TestGetDefaultDBPath
+        --- PASS: TestGetDefaultDBPath (0.00s)
+        === RUN   TestInitDB
+        2026/06/23 09:26:12 Database initialized at: test_init.db
+        === RUN   TestInitDB/CheckTableExistence
+        === RUN   TestInitDB/CheckTableExistence/memories
+        === RUN   TestInitDB/CheckPragmas
+        === RUN   TestInitDB/CheckPragmas/journal_mode
+        === RUN   TestInitDB/InvalidPath
+        === RUN   TestInitDB/MigrationError
+        --- PASS: TestInitDB (0.01s)
+        PASS
+        ok  	echo/internal/db	(cached)
+        === RUN   TestNewServer
+        2026/06/23 09:27:31 Database initialized at: test_mcp_server.db
+        === RUN   TestNewServer/VerifyToolMetadata
+        === RUN   TestNewServer/TestToolHandlers_TableDriven
+        === RUN   TestNewServer/TestToolHandlers_TableDriven/store_memory_success
+        === RUN   TestNewServer/TestToolHandlers_TableDriven/store_memory_missing_content
+        === RUN   TestNewServer/TestToolHandlers_TableDriven/recall_memory_success
+        === RUN   TestNewServer/TestToolHandlers_TableDriven/recall_memory_missing_keys
+        === RUN   TestNewServer/TestToolHandlers_TableDriven/search_memories_success
+        === RUN   TestNewServer/TestToolHandlers_TableDriven/search_memories_missing_query
+        === RUN   TestNewServer/TestToolHandlers_TableDriven/update_memory_success
+        === RUN   TestNewServer/TestToolHandlers_TableDriven/update_memory_invalid_id
+        === RUN   TestNewServer/TestToolHandlers_TableDriven/update_memory_missing_content
+        === RUN   TestNewServer/TestToolHandlers_TableDriven/search_for_deletion_success
+        === RUN   TestNewServer/TestToolHandlers_TableDriven/search_for_deletion_no_match
+        === RUN   TestNewServer/TestToolHandlers_TableDriven/search_for_deletion_missing_query
+        === RUN   TestNewServer/TestToolHandlers_TableDriven/delete_memory_success
+        === RUN   TestNewServer/TestToolHandlers_TableDriven/delete_memory_invalid_id
+        === RUN   TestNewServer/TestToolHandlers_TableDriven/get_analytics_success
+        --- PASS: TestNewServer (0.03s)
+        PASS
+        ok  	echo/internal/mcp	(cached)
 
 footer:
   author: "Victoria Cheng"

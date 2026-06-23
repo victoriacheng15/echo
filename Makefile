@@ -90,7 +90,7 @@ md-format:
 # Run tests for all packages
 test:
 	echo "Running tests..." && \
-	go test $(GO_TAGS) ./...
+	go test $(GO_TAGS) -v ./...
 
 # Run tests with coverage
 cov:

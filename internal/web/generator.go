@@ -13,50 +13,68 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
+type HeaderConfig struct {
+	ProjectName string `yaml:"project_name"`
+	SiteUrl     string `yaml:"site_url"`
+}
+
+type LLMSConfig struct {
+	Objective           string `yaml:"objective"`
+	Stack               string `yaml:"stack"`
+	Pattern             string `yaml:"pattern"`
+	EntryPoint          string `yaml:"entry_point"`
+	PersistenceStrategy string `yaml:"persistence_strategy"`
+	Observability       string `yaml:"observability"`
+}
+
+type ArchitectureConfig struct {
+	DiagramASCII string `yaml:"diagram_ascii"`
+}
+
+type TechComponent struct {
+	Title       string `yaml:"title"`
+	Description string `yaml:"description"`
+}
+
+type ProofComponent struct {
+	Title       string `yaml:"title"`
+	Description string `yaml:"description"`
+}
+
+type HumblePivot struct {
+	Title       string `yaml:"title"`
+	Description string `yaml:"description"`
+}
+
+type ObjectiveClarity struct {
+	Description string `yaml:"description"`
+}
+
+type VerifiableOutput struct {
+	Title          string `yaml:"title"`
+	TerminalOutput string `yaml:"terminal_output"`
+}
+
+type ReachConfig struct {
+	HumblePivots      []HumblePivot      `yaml:"humble_pivots"`
+	ObjectiveClarity  ObjectiveClarity   `yaml:"objective_clarity"`
+	VerifiableOutputs []VerifiableOutput `yaml:"verifiable_outputs"`
+}
+
+type FooterConfig struct {
+	Author       string `yaml:"author"`
+	GithubLink   string `yaml:"github_link"`
+	LinkedinLink string `yaml:"linkedin_link"`
+}
+
 type Landing struct {
-	Header struct {
-		ProjectName string `yaml:"project_name"`
-		SiteUrl     string `yaml:"site_url"`
-	} `yaml:"header"`
-	SystemSpec struct {
-		Objective           string `yaml:"objective"`
-		Stack               string `yaml:"stack"`
-		Pattern             string `yaml:"pattern"`
-		EntryPoint          string `yaml:"entry_point"`
-		PersistenceStrategy string `yaml:"persistence_strategy"`
-		Observability       string `yaml:"observability"`
-		MachineRegistry     string `yaml:"machine_registry"`
-	} `yaml:"system_specification"`
-	Hero struct {
-		Headline         string `yaml:"headline"`
-		SubHeadline      string `yaml:"sub_headline"`
-		BriefDescription string `yaml:"brief_description"`
-		CtaText          string `yaml:"cta_text"`
-		CtaLink          string `yaml:"cta_link"`
-		SecondaryCtaText string `yaml:"secondary_cta_text"`
-		SecondaryCtaLink string `yaml:"secondary_cta_link"`
-	} `yaml:"hero"`
-	WhatIsEcho struct {
-		Title   string   `yaml:"title"`
-		Content []string `yaml:"content"`
-	} `yaml:"what_is_echo"`
-	KeyFeatures struct {
-		Title    string `yaml:"title"`
-		Features []struct {
-			Name        string `yaml:"name"`
-			Description string `yaml:"description"`
-			Icon        string `yaml:"icon"`
-		} `yaml:"features"`
-	} `yaml:"key_features"`
-	WhyItMatters struct {
-		Title  string   `yaml:"title"`
-		Points []string `yaml:"points"`
-	} `yaml:"why_it_matters"`
-	Footer struct {
-		Author       string `yaml:"author"`
-		GithubLink   string `yaml:"github_link"`
-		LinkedinLink string `yaml:"linkedin_link"`
-	} `yaml:"footer"`
+	Header       HeaderConfig       `yaml:"header"`
+	LLMS         LLMSConfig         `yaml:"llms"`
+	Architecture ArchitectureConfig `yaml:"architecture"`
+	Tech         []TechComponent    `yaml:"tech"`
+	Proof        []ProofComponent   `yaml:"proof"`
+	Reach        ReachConfig        `yaml:"reach"`
+	Footer       FooterConfig       `yaml:"footer"`
 }
 
 type Evolution struct {
